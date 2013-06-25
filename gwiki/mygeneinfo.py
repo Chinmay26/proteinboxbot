@@ -17,8 +17,6 @@ def getJson(url):
             return json.loads(contents)
     except urllib2.HTTPError as e:
         if e.code == 404:  
-            pass
-        else: 
             raise e     
     except IOError as e:
         print("Network error: are you connected to the internet?")
@@ -31,17 +29,22 @@ def getinfo(entrez):
         return
     HGNC = ''
     OMIM =''
+    name =''
     if "HGNC" in gene_json:
         HGNC = gene_json["HGNC"]
     if "MIM" in gene_json:
         OMIM = gene_json["MIM"]
-    #print entrez,HGNC , OMIM , gene_json["name"]
+    if "name" in gene_json:
+        Gene_name = gene_json["name"]
+    if "symbol" in gene_json:
+        Symbol = gene_json["symbol"]
+    #print entrez,HGNC , OMIM , Gene_name,Symbol
     
     
     
   
-#if __name__ == '__main__':
-#   getinfo(str(10008))
+if __name__ == '__main__':
+   getinfo(str(10008))
  #   for i in range(1,50):
   #      getinfo(str(i))  
   

@@ -11,6 +11,7 @@ properties ={'Entrez Gene ID': 'p351' ,
 #TO-DO  Include other properties
 #Q4115189 - sandbox
 #Obtain the gene article from wikipedia
+
 site = pywikibot.Site('en', 'wikipedia')
 page = pywikibot.Page(site,'Alpha-1-B glycoprotein')
 wikipedia_item = pywikibot.ItemPage.fromPage(page)
