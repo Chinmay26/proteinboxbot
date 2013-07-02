@@ -1,12 +1,15 @@
-'''
-Created on Jun 20, 2013
 
-@author: chinmay
-'''
-import json,urllib2
+#MODIFIED mygeneinfo of previous bot. Retained most part of previous mygeneinfo 
+import json,urllib2,re
+try:
+    import settings
+except ImportError as e:
+    print "Configure settings appropriately"
+    raise e
+    
+from HumanGene import *
+BASE_URL =  settings.mygene_base
 
-BASE_URL =  "http://mygene.info/gene/"
-#TO-DO Currently we obtain only first JSON document-basic gene info. Extend to include homologs, meta-json etc
 def getJson(url):
     ufile = None
     try:
@@ -22,29 +25,55 @@ def getJson(url):
         print("Network error: are you connected to the internet?")
         raise e
     
-def getinfo(entrez):
-    gene_json = getJson(BASE_URL + entrez) 
-    #print gene_json
-    if gene_json is None:
-        return
-    HGNC = ''
-    OMIM =''
-    name =''
-    if "HGNC" in gene_json:
-        HGNC = gene_json["HGNC"]
-    if "MIM" in gene_json:
-        OMIM = gene_json["MIM"]
-    if "name" in gene_json:
-        Gene_name = gene_json["name"]
-    if "symbol" in gene_json:
-        Symbol = gene_json["symbol"]
-    #print entrez,HGNC , OMIM , Gene_name,Symbol
+def get(json,key):
+    result = u''
+    if isinstance(json, dict):
+        result = json[key] if key in json else u''
+    elif isinstance(json, list):
+        result = get(json[0], key) if (len(json)>0) else u''
+    elif isinstance(json, unicode):
+        result = json
+    elif isinstance(json, str):
+        result = json.decode('utf8')
+    return result
+    
+    
+def parse_json(gene_json):
+#edit: Refseq is a multivalue field
+    box = HumanGene()
+    root = gene_json
+    
+    box.setField("species", "Q5")
+    box.setField("subclass of","Q7187")
+    name = get(root, 'name')
+    if re.match(r'\w', name):
+        name = name[0].capitalize()+name[1:]
+    box.setField("Name", name)
+    entrez = get(root, 'entrezgene')
+    box.setField("Entrez Gene ID", entrez)
+    box.setField("Homologene ID", get(get(root, 'homologene'), 'id'))
+    box.setField("Symbol", get(root, 'symbol'))
+    box.setField("Ensembl ID", get(get(root, 'ensembl'), 'gene'))
+    box.setField("GenLoc_chr", get(get(root, 'genomic_pos'), 'chr'))
+    box.setField("GenLoc_start", get(get(root, 'genomic_pos'), 'start'))
+    box.setField("GenLoc_end", get(get(root, 'genomic_pos'), 'end'))
+    box.setField("RefSeq",get(get(root, 'refseq'), 'rna'))
+    box.setField("AltSymbols", get(root, 'alias'))
+    box.setField("RNA ID",get(get(root, 'accession'), 'rna'))
+    
+    return box
+    
+    
+
+def parse(entrez):
+    gene_json = getJson( BASE_URL + entrez )
+    return parse_json(gene_json)
     
     
     
   
-if __name__ == '__main__':
-   getinfo(str(10008))
- #   for i in range(1,50):
-  #      getinfo(str(i))  
+#if __name__ == '__main__':
+#   parse('5649')
+
+ 
   
