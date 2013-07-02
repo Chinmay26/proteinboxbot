@@ -9,6 +9,9 @@ import pywikibot #pywikipedia-rewrite branch
 properties ={'Entrez Gene ID': 'p351' , 'Uniprot ID' : 'p352' , 'HGNC ID' : 'p354' , 'Ensembl ID' : 'p594' , 'OMIM ID' : 'p492' , 'EC Number' : 'p591' }
 site = pywikibot.Site('en','wikipedia') 
 
+a = pywikibot.Site(code = 'en', fam = 'wikipedia', user = 'Chinmay26', sysop = False, interface = None)
+
+a.login()
 page = pywikibot.Page(site, 'reelin')
 item = pywikibot.ItemPage.fromPage(page)
 print item.getID()
@@ -24,7 +27,9 @@ if item.exists():
     print "Item exists"
     print item.claims
     
-    #claim = pywikibot.Claim(item,'p351')
+    claim = pywikibot.Claim(item,'p351')
+    x=claim.getTarget()
+    print x
     #claim.setTarget("5649")
     
     #item.addClaim(claim,bot=True)
@@ -35,4 +40,4 @@ if item.exists():
 #print item.claims
 #print type(properties['HGNC ID'])
 #print item.claims['p352'][1].getTarget()
-print 'hello'
+#print 'hello'
