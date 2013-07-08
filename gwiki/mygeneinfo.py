@@ -52,7 +52,7 @@ def parse_json(gene_json):
     entrez = get(root, 'entrezgene')
     box.setField("Entrez Gene ID", entrez)
     box.setField("Homologene ID", get(get(root, 'homologene'), 'id'))
-    box.setField("Symbol", get(root, 'symbol'))
+    box.setField("gene symbol", get(root, 'symbol'))
     box.setField("Ensembl ID", get(get(root, 'ensembl'), 'gene'))
     box.setField("GenLoc_chr", get(get(root, 'genomic_pos'), 'chr'))
     box.setField("GenLoc_start", get(get(root, 'genomic_pos'), 'start'))
