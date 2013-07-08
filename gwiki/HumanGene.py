@@ -5,7 +5,8 @@ class HumanGene(object):
               "Name",
               "HGNC ID",
               "Homologene ID",
-              "Symbol",
+              
+              "gene symbol",
               "Entrez Gene ID",
              # "GeneAtlas_image1",
              # "GeneAtlas_image2",
@@ -22,23 +23,23 @@ class HumanGene(object):
               ]
     
     multivalue = ["AltSymbols",
-                  "RNA ID",
-                  "RefSeq",]
+                  "RefSeq",
+                  "RNA ID"]
     
     HGene_properties = {
-                        'HGNC ID' :'p354',
-                        'Homologene ID' : 'p593',
-                        'gene symbol' : 'p353' ,
-                        'Entrez Gene ID' : 'p351',
+                         'p354' : 'HGNC ID',
+                         'p593' : 'Homologene ID',
+                         'p353' : 'gene symbol',
+                         'p351' : 'Entrez Gene ID',
                       #  'GeneAtlas image' : '',  #yet to be created
-                        'Ensembl ID' : 'p594',
-                        'GenLoc_chr' : 'p643',
-                        'Genloc start' :'p644',
-                        'Genloc end' : 'p645',
-                        'species' : 'p89' ,
-                        'subclass of' : 'p279',
-                        'RNA ID' : 'p639',
-                        'RefSeq' : 'p656'
+                         'p594' : 'Ensembl ID',
+                         'p643' : 'GenLoc_chr',
+                         'p644' : 'GenLoc_start',
+                         'p645' : 'GenLoc_end',
+                         'p89'  : 'species' ,
+                         'p279' : 'subclass of',
+                         'p639' : 'RNA ID',
+                         'p656' : 'RefSeq'
                         }
     
 
@@ -84,5 +85,37 @@ class HumanGene(object):
 
         self.fieldsdict = fieldsdict
         return fieldsdict
+    
+    def updateWith(self, targetbox):
+        
+        src = self.fieldsdict
+        try:
+            tgt = targetbox.fieldsdict
+        except AttributeError:
+            raise TypeError("Cannot update")
+        new = HumanGene()
+        updatedFields = {}
+        for field in self.fields:
+            srcval = src[field]
+            tgtval = tgt[field]                
+
+            if tgtval and srcval != tgtval:
+                updatedFields[field] = (srcval, tgtval)
+                new.setField(field, tgtval)
+            else:
+                new.setField(field, srcval)
+
+
+     
+        summary = "The following claims were modified"
+        if updatedFields:
+            summary = "Updated {} claims: ".format(len(updatedFields))
+            for field in updatedFields:
+                summary = summary+field+", "
+            summary = summary.rstrip(", ")
+
+        return new, summary, updatedFields
+    
+    
         
                         
