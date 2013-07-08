@@ -4,9 +4,9 @@ Created on Jun 20, 2013
 @author: chinmay
 '''
 import pywikibot
-
 import mygeneinfo
 import genewikidata
+import wikidata,HumanGene
 
 try:
     import settings
@@ -35,13 +35,59 @@ class bot(object):
     def logger(self):
         ''' to-do '''
             
-    
-    def write(self,Item,HGene):  
+    def update(self,Item,entrez):
+
+        HGene = mygeneinfo.parse(entrez)
+        #print type(HGene)
+        CurGene = wikidata.construct_from_item(Item,HumanGene.HumanGene())
+        #print CurGene
+        return CurGene.updateWith(HGene)
+        #self.write(Item,HGene)
+        
+    def write(self,Item,HGene,updatedClaims):  
         ''' write to wikidata'''
-        #Handle mutiple value fields like RNA ID etc
-        src = HGene.fieldsdict
-        for property_key in HGene.HGene_properties:
-            claim = pywikibot.Claim(Item,HGene.HGene_properties[property_key])
+        Claims = Item.get().get('claims')
+        Repo = self.genewikidata.data_repo
+        #CHECK item.editEntity()
+        #print Claims,type(Claims)
+        for property in HGene.HGene_properties:
+            #only if the property is to be updated
+            pfield = HGene.HGene_properties[property]
+            if  pfield in updatedClaims:
+                if pfield in HGene.multivalue:
+                    pass
+                #TO-DO mulitvalue claims
+                else:
+                    val = updatedClaims[pfield][1]
+                        #Check the item type
+                        #If item page  ex: val = Q20
+                        
+                    if val.startswith('Q'):
+                        valitem = pywikibot.ItemPage(Repo,val)
+                        if not valitem.exists():
+                            print 'Item not exists'
+                        val = valitem
+                        
+                    #If claim exists and is to be updated
+                    if property in Claims:
+                        claim =Item.claims[unicode(property)][0]
+                        
+                    else:#create a claim
+                        claim = pywikibot.Claim(Repo,unicode(property))
+                    #add the created/updated claim to the wikidata item
+                    claim.setTarget(val)
+                    Item.addClaim(claim,bot=True)
+                    #print pfield, property,val
+                    
+                
+                
+                
+            
+        
+        
+        #src = HGene.fieldsdict
+        #for property_key in HGene.HGene_properties:
+            #claim = pywikibot.Claim(Item,HGene.HGene_properties[property_key])
             #print claim
             #get present value :  claim.getTarget()
              
@@ -58,13 +104,17 @@ class bot(object):
         for title,entrez in source:
             #print title,entrez
             Wikidata_ID = self.genewikidata.get_identifier(title)
-            #print Wikidata_ID
+        #print Wikidata_ID
             Item = self.genewikidata.get_item(Wikidata_ID)
-            #print Item
-            HGene = mygeneinfo.parse(entrez)
-            print type(HGene)
-            #TO-DO Get updated HGene info
-            self.write(Item,HGene)
+        #print Item
+            try:
+               updatedHGene,summary,updatedClaims = self.update(Item,entrez)
+               #print updatedClaims
+            except Exception as err:
+                print 'handle exceptions like -- Item not exists, property invalidtype '
+                
+            self.write(Item,updatedHGene,updatedClaims)
+            
             
             
             
