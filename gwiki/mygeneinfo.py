@@ -1,14 +1,17 @@
 
-#MODIFIED mygeneinfo of previous bot. Retained most part of previous mygeneinfo 
-import json,urllib2,re
+ 
+import json,urllib2,re,urllib
 try:
     import settings
 except ImportError as e:
     print "Configure settings appropriately"
     raise e
     
-from HumanGene import *
+from WItem import *
+import rcsb
 BASE_URL =  settings.mygene_base
+META_URL = settings.mygene_meta
+UNIP_URL = settings.uniprot_url
 
 def getJson(url):
     ufile = None
@@ -38,42 +41,199 @@ def get(json,key):
     return result
     
     
-def parse_json(gene_json):
+#Construct for human gene 
+def parse_HumanGene_json(gene_json):
 #edit: Refseq is a multivalue field
-    box = HumanGene()
+    HGItem = HumanGene()
     root = gene_json
     
-    box.setField("species", "Q5")
-    box.setField("subclass of","Q7187")
+    HGItem.setField("species", "Q5")
+    HGItem.setField("subclass of","Q7187")
     name = get(root, 'name')
     if re.match(r'\w', name):
         name = name[0].capitalize()+name[1:]
-    box.setField("Name", name)
+    HGItem.setField("Name", name)
     entrez = get(root, 'entrezgene')
-    box.setField("Entrez Gene ID", entrez)
-    box.setField("Homologene ID", get(get(root, 'homologene'), 'id'))
-    box.setField("gene symbol", get(root, 'symbol'))
-    box.setField("Ensembl ID", get(get(root, 'ensembl'), 'gene'))
-    box.setField("GenLoc_chr", get(get(root, 'genomic_pos'), 'chr'))
-    box.setField("GenLoc_start", get(get(root, 'genomic_pos'), 'start'))
-    box.setField("GenLoc_end", get(get(root, 'genomic_pos'), 'end'))
-    box.setField("RefSeq",get(get(root, 'refseq'), 'rna'))
-    box.setField("AltSymbols", get(root, 'alias'))
-    box.setField("RNA ID",get(get(root, 'accession'), 'rna'))
+    HGItem.setField("Entrez Gene ID", entrez)
+    HGItem.setField("Homologene ID", get(get(root, 'homologene'), 'id'))
+    HGItem.setField("gene symbol", get(root, 'symbol'))
+    HGItem.setField("Ensembl ID", get(get(root, 'ensembl'), 'gene'))
+    HGItem.setField("GenLoc_chr", get(get(root, 'genomic_pos'), 'chr'))
+    HGItem.setField("GenLoc_start", get(get(root, 'genomic_pos'), 'start'))
+    HGItem.setField("GenLoc_end", get(get(root, 'genomic_pos'), 'end'))
+    HGItem.setField("RefSeq",get(get(root, 'refseq'), 'rna'))
+    HGItem.setField("AltSymbols", get(root, 'alias'))
+    HGItem.setField("RNA ID",get(get(root, 'accession'), 'rna'))
     
-    return box
-    
-    
+    return HGItem
 
-def parse(entrez):
+def _queryUniprot(entrez):
+    return uniprotAccForEntrezId(entrez)
+
+def parse_go_category(entry):
+
+    # single term:
+    if 'term' in entry:
+        return {entry['id']:entry['term']}
+    # multiple terms
+    else:
+        terms = []
+        results = []
+        for x in entry:
+            if x['term'] not in terms:
+                results.append( {x['id']:x['term']} )
+            terms.append(x['term'])
+        return results
+
+def uniprotAccForEntrezId(entrez):
+    '''Returns either one reviewed uniprot id or None.'''
+    url = 'http://www.uniprot.org/mapping/'
+    params = {
+        'from':'P_ENTREZGENEID',
+        'to':'ACC',
+        'format':'list',
+        'reviewed':'',
+        'query':entrez
+    }
+
+    data = urllib.urlencode(params)
+    response = urllib2.urlopen(urllib2.Request(url, data))
+    accns = response.read().split('\n')
+    for acc in accns:
+        if isReviewed(acc): return acc
+    return None
+
+def isReviewed(uniprot):
+    url = 'http://www.uniprot.org/uniprot/?query=reviewed:yes+AND+accession:{}&format=list'.format(uniprot)
+    return bool(urllib.urlopen(url).read().strip('\n'))
+
+def findReviewedUniprotEntry(entries, entrez):
+    """Attempts to return the first reviewed entry in a given dict of dbname:id
+    pairs for a gene's UniProt entries.
+    If a reviewed entry is not found, it attempts to query Uniprot directly for one.
+    If this still is unsuccessful, it returns one from TrEMBL at random.
+
+    Arguments:
+    - `entries`: a dict of entries, e.g {'Swiss-Prot':'12345', 'TrEMBL':'67890'}
+    """
+    if not isinstance(entries, dict) and not entrez:
+        return u''
+    elif entrez:
+        return _queryUniprot(entrez)
+
+    if 'Swiss-Prot' in entries:
+        entry = entries['Swiss-Prot']
+    else:
+        entry = entries['TrEMBL']
+
+    if isinstance(entry, list):
+        for acc in entry: 
+            if isReviewed(acc): return acc
+        # if no reviewed entries, check Uniprot directly
+        canonical = _queryUniprot(entrez)
+        if canonical: return canonical
+        else: return entry[0] 
+    else: 
+        canonical = _queryUniprot(entrez)
+        if canonical: return canonical
+        else: return entry
+    
+def findReviewedUniprotEntry2(entries, entrez):
+    """Attempts to return the first reviewed entry in a given dict of dbname:id
+    pairs for a gene's UniProt entries.
+    If a reviewed entry is not found, it attempts to query Uniprot directly for one.
+    If this still is unsuccessful, it returns one from TrEMBL at random.
+
+    Arguments:
+    - `entries`: a dict of entries, e.g {'Swiss-Prot':'12345', 'TrEMBL':'67890'}
+    """
+    if not isinstance(entries, dict) and not entrez:
+        return u''
+    elif entrez:
+        return uniprotAccForEntrezId(entrez)
+
+    def isreviewed(uniprot_id):
+        try:
+            uniprot = urllib.urlopen(UNIP_URL+uniprot_id+".txt")
+        except IOError:
+            print ("Could not connect to UniProt- check network?")
+        text = uniprot.read()
+        return ('Reviewed;' in text and not 'Unreviewed;' in text)
+
+    def queryUniprot(entrez):
+        return uniprotAccForEntrezId(entrez)
+
+    if 'Swiss-Prot' in entries:
+        entry = entries['Swiss-Prot']
+    else:
+        entry = entries['TrEMBL']
+
+    if isinstance(entry, list):
+        for acc in entry:
+            if isreviewed(acc): return acc
+        # if no reviewed entries, check Uniprot directly
+        canonical = queryUniprot(entrez)
+        if canonical: return canonical
+        else: return entry[0]
+    else:
+        canonical = queryUniprot(entrez)
+        if canonical: return canonical
+        else: return entry
+
+def parse_HumanGene(entrez):
     gene_json = getJson( BASE_URL + entrez )
-    return parse_json(gene_json)
+    return parse_HumanGene_json(gene_json)
+
+def parse_HumanProtein_json(gene_json):
+    root = gene_json
+    HPItem = HumanProtein()
+    
+    #species wikidata item human=Q5 , protein=Q8054
+    HPItem.setField("Name", get(root,'name'))
+    HPItem.setField("description", "Human Protein")
+    HPItem.setField("species", "Q5")
+    HPItem.setField("subclass of","Q8054")
+    name = get(root, 'name')
+    HPItem.setField("Name", name)
+    
+    entrez = get(root, 'entrezgene')
+    uniprot = findReviewedUniprotEntry(get(root, 'uniprot'), entrez)
+    HPItem.setField("Uniprot ID", uniprot)
+    
+    HPItem.setField("EC number", get(root, 'ec'))
+    
+    #GO TERMS
+    
+    if get(root, 'go'):
+        HPItem.setField("cell component", parse_go_category(get(root['go'], 'CC')))
+        HPItem.setField("molecular function", parse_go_category(get(root['go'], 'MF')))
+        HPItem.setField("biological process", parse_go_category(get(root['go'], 'BP')))
+    
+    #PDB  - CHECK what if Human proteins donot have pdb Id?
+    pdbs = rcsb.pdbs_for_uniprot(uniprot)
+    if not pdbs:
+        pdbs = get(root, 'pdb')
+    #checmical_structure
+    
+        
+        
+    HPItem.setField("PDB", pdbs)
+    
+    return HPItem
+   
+    
+    
+    
+def parse_HumanProtein(entrez):
+    gene_json = getJson( BASE_URL + entrez )
+    return parse_HumanProtein_json(gene_json)
+    
     
     
     
   
-#if __name__ == '__main__':
-#   parse('5649')
+if __name__ == '__main__':
+   parse_HumanProtein('5649')
 
  
   
