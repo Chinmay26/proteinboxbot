@@ -3,16 +3,17 @@ Created on Jul 3, 2013
 
 @author: chinmay
 '''
-import HumanGene
+import WItem
 import pywikibot
-import re
+from pywikibot.data import api
+import re,urllib2
 try:
     import settings
 except ImportError:
     print(''' Configure settings.py''')
     raise
 
-def construct_from_item(Item, HGene):
+def construct_from_item(Item,Entity ):
     Item.get()
     
    # for property in HGene.HGene_properties:
@@ -26,10 +27,16 @@ def construct_from_item(Item, HGene):
                 
                 
     for claim in Item.claims:
-        if claim in HGene.HGene_properties:
+        if claim in Entity.properties:
             if len(Item.claims[claim]) > 1 :
-                #TO-DO  work on muitvalue claims and qualifiers
+                #TO-DO  work on  qualifiers
                 multival = []
+                total = len(Item.claims[claim])
+                for k in range(0,total):
+                    existing_val = Item.claims[claim][k].getTarget()
+                    multival.append(existing_val)
+                
+                pval = multival
             
             else:
                 pval = Item.claims[claim][0].getTarget()
@@ -40,14 +47,41 @@ def construct_from_item(Item, HGene):
                         #print match.group(1)
                         pval = str(match.group(1))
                     
-                field_name = HGene.HGene_properties[claim]
-                HGene.setField(field_name,pval)
+            field_name = Entity.properties[claim]
+            Entity.setField(field_name,pval)
                 
-    return HGene
-                         
+    return Entity
+
+
+def search_Item(title):
+    
+    mysite = pywikibot.Site("wikidata","wikidata")
+    
+    params = { 'action' :'wbsearchentities' ,
+                'format' : 'json' ,              
+              'language' : 'en',
+               'limit' : '4',
+                'type' : 'item',
+                'search': '',
+              }
+    params['search']= title
+    request = api.Request(site=mysite,**params)
+    data = request.submit()
+    
+    return data 
+
+#def search_Item(title):
+
+#    mysite = pywikibot.Site("wikidata","wikidata")
+#    url = "http://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&search=%s&language=en&type=item&limit=4",%(title)
+#    req = urllib2.Request(url)
+#    u = urllib2.urlopen(req)
+
             
         
-    
+if __name__ == '__main__':
+    ID = search_Item('jhfuf6fuwqw')
+    print ID
 
     
   
