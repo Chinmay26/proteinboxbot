@@ -3,7 +3,7 @@ Created on Jun 20, 2013
 
 @author: chinmay
 '''
-import pywikibot
+import pywikibot,sys,re
 import mygeneinfo,argparse
 import genewikidata
 import wikidata,WItem
@@ -35,26 +35,24 @@ class bot(object):
     def logger(self):
         ''' to-do '''
             
-    def updateProtein(self,Item,entrez):
 
-        HProtein = mygeneinfo.parse_HumanProtein(entrez)
-        #print type(HGene)
-        CurProtein = wikidata.construct_from_item(Item,WItem.HumanProtein())
-        #print CurGene
-        return CurProtein.updateWith(HProtein)
-        #self.write(Item,HGene)
         
-    def write(self,Item,HProtein,updatedClaims):  
+    def write(self,Item,Entity,updatedClaims):  
         ''' write to wikidata'''
         Claims = Item.get().get('claims')
+        
         Repo = self.genewikidata.data_repo
+        if 'description' in updatedClaims:
+            des = updatedClaims['description'][1]
+            descriptions = {"en":str(des)}
+            Item.editDescriptions(descriptions)
         #CHECK item.editEntity()
         #print Claims,type(Claims)
-        for property in HProtein.properties:
+        for property in Entity.properties:
             #only if the property is to be updated
-            pfield = HProtein.properties[property]
+            pfield = Entity.properties[property]
             if  pfield in updatedClaims:
-                if pfield in HProtein.multivalue:
+                if pfield in Entity.multivalue:
                     claim = pywikibot.Claim(Repo,unicode(property))
                     multival = updatedClaims[pfield][1]
                     #get the existing values from wikidata
@@ -64,16 +62,23 @@ class bot(object):
                         total = len(Item.claims[unicode(property)])
                         for k in range(0,total):
                             existing_val = Item.claims[unicode(property)][k].getTarget()
+                            if isinstance(existing_val,pywikibot.ItemPage):
+                                existing_val = existing_val.getID()
                             curval.append(existing_val)
                
 
                         
                         
                     for val in multival:
-                        #to-do handle wikidata items as values
+                        #if value exists dont update
                         if val in curval:
                             pass
                         else:
+                            if (val.startswith('Q') or val.startswith('q')) and property != 'p352':
+                                valitem = pywikibot.ItemPage(Repo,val)
+                                if not valitem.exists():
+                                    print 'Item not exists'
+                                val = valitem
                             claim.setTarget(val)
                             Item.addClaim(claim,bot=True)
                             print val,pfield,Item
@@ -86,7 +91,7 @@ class bot(object):
                         #Check the val type
                         #If item page  ex: val = Q20
                         
-                    if val.startswith('Q') and property != 'p352':
+                    if (val.startswith('Q') or val.startswith('q')) and property != 'p352':
                         valitem = pywikibot.ItemPage(Repo,val)
                         if not valitem.exists():
                             print 'Item not exists'
@@ -95,10 +100,14 @@ class bot(object):
                     #If claim exists and is to be updated
                     if property in Claims:
                         claim =Item.claims[unicode(property)][0]
-                        
+                        existing_val = Item.claims[unicode(property)][0].getTarget()
+                        if val == existing_val:
+                            break
+
                     else:#create a claim
                         claim = pywikibot.Claim(Repo,unicode(property))
                     #add the created/updated claim to the wikidata item
+                 
                     claim.setTarget(val)
                     Item.addClaim(claim,bot=True)
                     print pfield, property,val,Item
@@ -120,24 +129,114 @@ class bot(object):
             
             #claim.setTarget("5649")
             #Item.addClaim(claim,bot=True) 
+            
+
         
         
-    def run_HumanProtein(self):
+    def run_HumanProtein(self,HumanProtein,Item):
         ''' Run the bot for human protein items '''
+
+        try:
+            CurProtein = wikidata.construct_from_item(Item,WItem.HumanProtein())
+            updatedProtein,summary,updatedClaims = CurProtein.updateWith(HumanProtein)
+                
+               #print updatedClaims
+        except Exception as err:
+            print 'handle exceptions like -- Item not exists, property invalidtype '
+                
+        self.write(Item,updatedProtein,updatedClaims)
+            
+    def run_HumanGene(self,HumanGene):
+        
+        key  = HumanGene.fieldsdict['Entrez Gene ID']
+        title = HumanGene.fieldsdict['Name']
+        res = wikidata.search_Item(title)
+        if res:
+            entrez = 'p351'
+            ID = wikidata.search_claim(res,entrez,key)
+            Item = self.genewikidata.get_item(ID)
+        else:
+            print "ERROR! CHECK TITLE SEARCH"
+            sys.exit(1)
+        try:
+            CurHGene = wikidata.construct_from_item(Item, WItem.HumanGene())
+            updatedHGene,summary,updatedClaims = CurHGene.updateWith(HumanGene)
+              #print updatedClaims
+        except Exception as err:
+            print 'handle exceptions like -- Item not exists, property invalidtype '
+                
+        self.write(Item,updatedHGene,updatedClaims) 
+            
+    def run_MouseGene(self,MouseGene):
+        
+        key  = MouseGene.fieldsdict['Entrez Gene ID']
+        title = MouseGene.fieldsdict['Name']
+        res = wikidata.search_Item(title)
+        if res:
+            entrez = 'p351'
+            ID = wikidata.search_claim(res,entrez,key)
+            Item = self.genewikidata.get_item(ID)
+        else:
+            print "ERROR! CHECK TITLE SEARCH"
+            sys.exit(1)
+        
+        try:
+            CurMGene = wikidata.construct_from_item(Item, WItem.MouseGene())
+            updatedMGene,summary,updatedClaims = CurMGene.updateWith(MouseGene)
+              #print updatedClaims
+        except Exception as err:
+            print 'handle exceptions like -- Item not exists, property invalidtype '
+                
+        self.write(Item,updatedMGene,updatedClaims)  
+            
+    def run_MouseProtein(self,MouseProtein):
+        
+        key  = MouseProtein.fieldsdict['Uniprot ID']
+        title = MouseProtein.fieldsdict['Name']
+        res = wikidata.search_Item(title)
+        if res:
+            entrez = 'p352'
+            ID = wikidata.search_claim(res,entrez,key)
+            Item = self.genewikidata.get_item(ID)
+        else:
+            print "ERROR! CHECK TITLE SEARCH"
+            sys.exit(1)
+        
+        
+        try:
+            CurMProtein = wikidata.construct_from_item(Item, WItem.MouseProtein())
+            updatedMProtein,summary,updatedClaims = CurMProtein.updateWith(MouseProtein)
+              #print updatedClaims
+        except Exception as err:
+            print 'handle exceptions like -- Item not exists, property invalidtype '
+                
+        self.write(Item,updatedMProtein,updatedClaims)         
+            
+            
+            
+    def run(self):
+         
         source = self.genewikidata.title_and_entrez()
+      
         for title,entrez in source:
+            #construct items from mygeneinfo
+            HumanGene,HumanProtein,MouseGene,MouseProtein = mygeneinfo.Parse(entrez)
+            
             #print title,entrez
             Wikidata_ID = self.genewikidata.get_identifier(title)
             #print Wikidata_ID
-            Item = self.genewikidata.get_item(Wikidata_ID)
-            #print Item
-            try:
-               updatedProtein,summary,updatedClaims = self.updateProtein(Item,entrez)
-               #print updatedClaims
-            except Exception as err:
-                print 'handle exceptions like -- Item not exists, property invalidtype '
+            if Wikidata_ID:
+                Item = self.genewikidata.get_item(Wikidata_ID)
+         
+         
+            self.run_HumanProtein(HumanProtein,Item)
+         
+            self.run_HumanGene(HumanGene)
                 
-            self.write(Item,updatedProtein,updatedClaims)
+            self.run_MouseProtein(MouseProtein)
+                
+            self.run_MouseGene(MouseGene)
+        
             
             
             
@@ -146,7 +245,7 @@ class bot(object):
 
 def main():
     
-    BOT.run_HumanProtein()
+    BOT.run()
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description= '''Handling Gene wikidata items''')
