@@ -51,6 +51,10 @@ class Item(object):
             new = HumanGene()
         if isinstance(targetbox,HumanProtein):
             new = HumanProtein()
+        if isinstance(targetbox,MouseGene):
+            new = MouseGene()
+        if isinstance(targetbox,MouseProtein):
+            new = MouseProtein()
         updatedFields = {}
         for field in self.fields:
             srcval = src[field]
@@ -73,47 +77,63 @@ class Item(object):
 
         return new, summary, updatedFields
     
+    
+#encodes, ortholog , Gene Atlas
 class HumanGene(Item):
         
     fields = [
               "Name",
+              "description",
               "HGNC ID",
               "Homologene ID",
-              
+              "description",
               "gene symbol",
               "Entrez Gene ID",
+              "OMIM ID",
              # "GeneAtlas_image1",
              # "GeneAtlas_image2",
              # "GeneAtlas_image3",
-              "Ensembl ID",
+              "Ensembl Gene ID",
+              "ortholog",
+              "Ensembl Transcript ID",
               "GenLoc_chr",
               "GenLoc_start",
               "GenLoc_end",
-              "species",
+              "found in taxon",
               "subclass of",
+              "encodes",
               "RefSeq",
               "AltSymbols",
-              "RNA ID"
+              "species",
+              "RefSeq RNA ID"
               ]
     
     multivalue = ["AltSymbols",
                   "RefSeq",
-                  "RNA ID"]
+                  "Ensembl Transcript ID",
+                  "RefSeq RNA ID"]
     
     properties = {
                          'p354' : 'HGNC ID',
                          'p593' : 'Homologene ID',
                          'p353' : 'gene symbol',
                          'p351' : 'Entrez Gene ID',
-                        #'GeneAtlas image' : '',  #yet to be created
-                         'p594' : 'Ensembl ID',
+                        #'p692' : 'GeneAtlas image',  
+                         'p594' : 'Ensembl Gene ID',
+                         'p688' : 'encodes',
+                         'p704' : 'Ensembl Transcript ID',
                          'p643' : 'GenLoc_chr',
+                         'p89'  : 'species',
                          'p644' : 'GenLoc_start',
                          'p645' : 'GenLoc_end',
-                         'p89'  : 'species' ,
+                         'p703' : 'found in taxon' ,
                          'p279' : 'subclass of',
-                         'p639' : 'RNA ID',
-                         'p656' : 'RefSeq'
+                         'p639' : 'RefSeq RNA ID',
+                         'p684' : 'ortholog',
+                         'p656' : 'RefSeq',
+                         'p492' : 'OMIM'
+    
+    
                         }
     
     def __init__(self):
@@ -125,21 +145,23 @@ class HumanGene(Item):
                 self.fieldsdict[field]=u'' 
     
     
-    
+#encoded by 
 class HumanProtein(Item): 
             
     fields = [
               "Name",
               "description",
-              "chemical structure",
-              "EC number",              
+              "EC number",
+              "EC classification",              
               "PDB",
               "Uniprot ID",
               "molecular function",
+              "encoded by",
               "cell component",
               "biological process",
-              #"RefSeq Protein ID"
-              "species",
+              "RefSeq Protein ID",
+              "Ensembl Protein ID",
+              "found in taxon",
               "subclass of"
               
              ]
@@ -148,12 +170,64 @@ class HumanProtein(Item):
                   "molecular function",
                   "cell component",
                   "biological process",
-                  #"RefSeq Protein ID",
+                  "RefSeq Protein ID",
+                  "Ensembl Protein ID",
+                  "EC number"
+                   ]
+    
+    properties = {
+                    
+                         'p660' : 'EC classification',
+                         'p591' : 'EC number',
+                         'p638' : 'PDB',
+                         'p702' : 'encoded by',
+                         'p352' : 'Uniprot ID',
+                         'p637' : 'RefSeq Protein ID',
+                         'p681' : 'cell component',
+                         'p682' : 'biological process',
+                         'p680' : 'molecular function ',
+                         'p703' : 'found in taxon' ,
+                         'p279' : 'subclass of',
+                         'p705' : 'Ensembl Protein ID'
+                         
+                        }
+    
+    def __init__(self):
+        self.fieldsdict = {}
+        for field in self.fields:
+            if field in self.multivalue:
+                self.fieldsdict[field]=u''
+            else:
+                self.fieldsdict[field]=u''     
+                
+                
+class MouseProtein(Item): 
+            
+    fields = [
+              "Name",
+              "description",
+              "EC number",              
+              "PDB",
+              "Uniprot ID",
+              "molecular function",
+              "cell component",
+              "biological process",
+              "RefSeq Protein ID",
+              "found in taxon",
+              "subclass of"
+              
+             ]
+    
+    multivalue = ["PDB",
+                  "molecular function",
+                  "cell component",
+                  "biological process",
+                  "RefSeq Protein ID",
                   "EC classification"
                    ]
     
     properties = {
-                         'p117' : 'chemical structure',
+                  
                          'p660' : 'EC classification',
                          'p638' : 'PDB',
                          'p352' : 'Uniprot ID',
@@ -161,7 +235,7 @@ class HumanProtein(Item):
                          'p681' : 'cell component',
                          'p682' : 'biological process',
                          'p680' : 'molecular function ',
-                         'p89'  : 'species' ,
+                         'p703'  : 'found in taxon' ,
                          'p279' : 'subclass of'
                          
                          
@@ -173,5 +247,61 @@ class HumanProtein(Item):
             if field in self.multivalue:
                 self.fieldsdict[field]=u''
             else:
-                self.fieldsdict[field]=u''     
+                self.fieldsdict[field]=u''
+                
+                
+class MouseGene(Item):
+        
+    fields = [
+              "Name",
+              "MGI ID",     #mouse genome informatics ID
+              "Homologene ID",
+              "description",              
+              "gene symbol",
+              "Entrez Gene ID",
+              "Ensembl Gene ID",
+              "Ensembl Transcript ID",
+              "GenLoc_chr",
+              "GenLoc_start",
+              "GenLoc_end",
+              "found in taxon",
+              "subclass of",
+              "RefSeq",
+              "species",
+              "ortholog",
+              "encodes",
+              "AltSymbols",
+              "RNA ID"
+              ]
+    
+    multivalue = ["AltSymbols",
+                  "RefSeq",
+                  "RNA ID"]
+    
+    properties = {
+                         'p671' : 'MGI ID',
+                         'p593' : 'Homologene ID',
+                         'p89'  : 'species',
+                         'p353' : 'gene symbol',
+                         'p351' : 'Entrez Gene ID',
+                         'p594' : 'Ensembl Gene ID',
+                         'p704' : 'Ensembl Transcript ID',
+                         'p688' : 'encodes',
+                         'p643' : 'GenLoc_chr',
+                         'p644' : 'GenLoc_start',
+                         'p684' : 'ortholog',
+                         'p645' : 'GenLoc_end',
+                         'p703'  : 'found in taxon' ,
+                         'p279' : 'subclass of',
+                         'p639' : 'RefSeq RNA ID',
+                         'p656' : 'RefSeq'
+                        }
+    
+    def __init__(self):
+        self.fieldsdict = {}
+        for field in self.fields:
+            if field in self.multivalue:
+                self.fieldsdict[field]=u''
+            else:
+                self.fieldsdict[field]=u'' 
                         
