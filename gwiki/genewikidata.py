@@ -42,18 +42,26 @@ class GeneWikidata(object):
     def articles(self):
         self.category = pywikibot.Category(pywikibot.Link(settings.CATEGORY_NAME,defaultNamespace=14)) 
         #NOTICE  total = None  when running for the entire set of PBB templates
-        articles = self.category.articles(recurse = False, step = None, total = 1, content = True, namespaces = None)
+        articles = self.category.articles(recurse = False, step = None, total = 3, content = True, namespaces = None)
         #content = True retreive the contents of gene wikiarticles
         #recurse = False Dont go into subcategories
         #total  retreive the many number of pages 
         for article in articles:
             yield article
+   
+    def entrez(self):    
+        for article in self.articles():
+            match = re.search(r'\{\{\s?PBB\s?\|\s?geneid=\s?([\d]*)\s?\}\}', article.text)
+            if match :
+                yield (match.group(1)) 
             
     def title_and_entrez(self):
         for article in self.articles():
             match = re.search(r'\{\{\s?PBB\s?\|\s?geneid=\s?([\d]*)\s?\}\}', article.text)
             if match :
                 yield (article.title(),match.group(1)) 
+                
+        
                 
     #def infoboxes(self):
         
