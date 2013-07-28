@@ -5,6 +5,7 @@ Created on Jul 3, 2013
 '''
 import WItem
 import pywikibot
+import genewikidata
 from pywikibot.data import api
 import re,urllib2
 try:
@@ -24,7 +25,12 @@ def construct_from_item(Item,Entity ):
    #         else:
    #             pvalue = Item.claims[HGene.HGene_properties[property]]
    #             print pvalue
-                
+   
+    label = Item.labels['en']
+    Entity.setField('Name',label)
+    #if 'en' in Item.descriptions:
+    #    des = Item.descriptions['en']
+    #Entity.setField('description',des)
                 
     for claim in Item.claims:
         if claim in Entity.properties:
@@ -34,6 +40,12 @@ def construct_from_item(Item,Entity ):
                 total = len(Item.claims[claim])
                 for k in range(0,total):
                     existing_val = Item.claims[claim][k].getTarget()
+                    if isinstance(existing_val,pywikibot.page.ItemPage):
+                        match = re.search(r'\[\[wikidata\:([\w]*)\]\]',str(existing_val))
+                        if match:
+                        #print match.group(1)
+                            existing_val = str(match.group(1))
+                    
                     multival.append(existing_val)
                 
                 pval = multival
@@ -52,23 +64,67 @@ def construct_from_item(Item,Entity ):
                 
     return Entity
 
-
+#search for the item with given title
 def search_Item(title):
+    
     
     mysite = pywikibot.Site("wikidata","wikidata")
     
     params = { 'action' :'wbsearchentities' ,
                 'format' : 'json' ,              
               'language' : 'en',
-               'limit' : '4',
+               'limit' : '4',      #retreive four items
                 'type' : 'item',
                 'search': '',
               }
+    
     params['search']= title
     request = api.Request(site=mysite,**params)
     data = request.submit()
+    if data['success']:
+        return data['search'] 
+
+#create an item with an label
+def create_Item(title):
     
-    return data 
+    mysite = pywikibot.Site("wikidata","wikidata")
+    repo = mysite.data_repository()
+    labels = []
+    labels.append({"language":"en","value" : title})
+    data = {
+        "labels" : labels 
+        }
+    New = repo.editEntity({},data,bot=False)
+    ID = New['entity']['id']
+    return ID
+
+def search_claim(Items,property,value):
+    mysite = pywikibot.Site("wikidata","wikidata")
+    repo = mysite.data_repository()
+    Identifier = []
+    for val in Items:
+        ID = val['id']
+        item = pywikibot.ItemPage(repo,ID)
+        item.get()
+        #check if the claim exists in item
+        if property in item.claims:
+            #check for correct value of claim
+            if unicode(value) == item.claims[property][0].getTarget():
+                Identifier = item.getID()
+                break
+            
+    return Identifier
+    
+    
+def addClaim(ID,property,value):
+    mysite = pywikibot.Site("wikidata","wikidata")
+    repo = mysite.data_repository()
+    item = pywikibot.ItemPage(repo,ID)
+    item.get()
+    claim = pywikibot.Claim(repo,property)
+    claim.setTarget(value)
+    item.addClaim(claim, bot = True)
+    
 
 #def search_Item(title):
 
@@ -79,9 +135,9 @@ def search_Item(title):
 
             
         
-if __name__ == '__main__':
-    ID = search_Item('jhfuf6fuwqw')
-    print ID
+#if __name__ == '__main__':
+#    ID = search_Item('jhfuf6fuwqw')
+#    print ID
 
     
   
