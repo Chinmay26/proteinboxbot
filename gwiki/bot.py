@@ -64,7 +64,7 @@ class bot(object):
                             existing_val = Item.claims[unicode(property)][k].getTarget()
                             if isinstance(existing_val,pywikibot.ItemPage):
                                 existing_val = existing_val.getID()
-                            curval.append(existing_val)
+                            curval.append(existing_val.title())
                
 
                         
@@ -74,6 +74,7 @@ class bot(object):
                         if val in curval:
                             pass
                         else:
+                            val = unicode(val)
                             if (val.startswith('Q') or val.startswith('q')) and property != 'p352':
                                 valitem = pywikibot.ItemPage(Repo,val)
                                 if not valitem.exists():
@@ -86,7 +87,7 @@ class bot(object):
                         
                     
                 else:
-                    val = updatedClaims[pfield][1]
+                    val = unicode(updatedClaims[pfield][1])
                     print val
                         #Check the val type
                         #If item page  ex: val = Q20
@@ -96,21 +97,20 @@ class bot(object):
                         if not valitem.exists():
                             print 'Item not exists'
                         val = valitem
-                        
+                    existing_val = None
                     #If claim exists and is to be updated
                     if property in Claims:
                         claim =Item.claims[unicode(property)][0]
                         existing_val = Item.claims[unicode(property)][0].getTarget()
-                        if val == existing_val:
-                            break
 
                     else:#create a claim
                         claim = pywikibot.Claim(Repo,unicode(property))
                     #add the created/updated claim to the wikidata item
                  
                     claim.setTarget(val)
-                    Item.addClaim(claim,bot=True)
-                    print pfield, property,val,Item
+                    if val != existing_val:
+                        Item.addClaim(claim,bot=True)
+                        print pfield, property,val,Item
                     
                 
                 
@@ -195,8 +195,8 @@ class bot(object):
         title = MouseProtein.fieldsdict['Name']
         res = wikidata.search_Item(title)
         if res:
-            entrez = 'p352'
-            ID = wikidata.search_claim(res,entrez,key)
+            uniprot = 'p352'
+            ID = wikidata.search_claim(res,uniprot,key)
             Item = self.genewikidata.get_item(ID)
         else:
             print "ERROR! CHECK TITLE SEARCH"
