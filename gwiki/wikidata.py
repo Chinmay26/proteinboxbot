@@ -25,12 +25,15 @@ def construct_from_item(Item,Entity ):
    #         else:
    #             pvalue = Item.claims[HGene.HGene_properties[property]]
    #             print pvalue
-   
+    
+    #labels definitely exist
     label = Item.labels['en']
     Entity.setField('Name',label)
-    #if 'en' in Item.descriptions:
-    #    des = Item.descriptions['en']
-    #Entity.setField('description',des)
+    #descriptions may not exist
+    if 'descriptions' in Item.get():
+        if 'en' in Item.descriptions:
+            des = Item.descriptions['en']
+            Entity.setField('description',des)
                 
     for claim in Item.claims:
         if claim in Entity.properties:
