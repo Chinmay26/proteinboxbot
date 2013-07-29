@@ -131,7 +131,7 @@ class HumanGene(Item):
                          'p639' : 'RefSeq RNA ID',
                          'p684' : 'ortholog',
                          'p656' : 'RefSeq',
-                         'p492' : 'OMIM'
+                         'p492' : 'OMIM ID'
     
     
                         }
@@ -185,7 +185,7 @@ class HumanProtein(Item):
                          'p637' : 'RefSeq Protein ID',
                          'p681' : 'cell component',
                          'p682' : 'biological process',
-                         'p680' : 'molecular function ',
+                         'p680' : 'molecular function',
                          'p703' : 'found in taxon' ,
                          'p279' : 'subclass of',
                          'p705' : 'Ensembl Protein ID'
@@ -213,7 +213,9 @@ class MouseProtein(Item):
               "cell component",
               "biological process",
               "RefSeq Protein ID",
+              "encoded by",
               "found in taxon",
+              "Ensembl Protein ID",
               "subclass of"
               
              ]
@@ -223,6 +225,7 @@ class MouseProtein(Item):
                   "cell component",
                   "biological process",
                   "RefSeq Protein ID",
+                  "Ensembl Protein ID",
                   "EC classification"
                    ]
     
@@ -232,10 +235,12 @@ class MouseProtein(Item):
                          'p638' : 'PDB',
                          'p352' : 'Uniprot ID',
                          'p637' : 'RefSeq Protein ID',
+                         'p702' : 'encoded by',
                          'p681' : 'cell component',
                          'p682' : 'biological process',
-                         'p680' : 'molecular function ',
+                         'p680' : 'molecular function',
                          'p703'  : 'found in taxon' ,
+                         'p705' : 'Ensembl Protein ID',
                          'p279' : 'subclass of'
                          
                          
@@ -271,12 +276,13 @@ class MouseGene(Item):
               "ortholog",
               "encodes",
               "AltSymbols",
-              "RNA ID"
+              "RefSeq RNA ID"
               ]
     
     multivalue = ["AltSymbols",
                   "RefSeq",
-                  "RNA ID"]
+                  "Ensembl Transcript ID",
+                  "RefSeq RNA ID"]
     
     properties = {
                          'p671' : 'MGI ID',
