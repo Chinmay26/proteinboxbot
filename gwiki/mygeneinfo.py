@@ -201,10 +201,13 @@ def parse_HumanGene_json(gene_json,homolog_json):
     #search result is null or corresponding human protein doesnot exist
     if not ID:
         #create human protein item
-        ID = wikidata.create_Item(key)
+        #ID = wikidata.create_Item(key)
         #add uniprot claim to human protein item
-        wikidata.addClaim(ID, 'p352',uniprot)    
-    HGItem.setField("encodes", ID)
+        #wikidata.addClaim(ID, 'p352',uniprot)
+        #TO-DO
+        print "ERROR IN RETREIVING Human protein item"   
+    #following convention of having capitalised wikidata identifiers 
+    HGItem.setField("encodes", ID.title())
     
     #ortholog
     key = get(homolog_json,'symbol')
@@ -218,11 +221,13 @@ def parse_HumanGene_json(gene_json,homolog_json):
     #search result is null or corresponding mouse gene doesnot exist
     if not ID:
         #create mouse gene item
+        print "creating mouse gene item -- with entrez", mouse_entrez
         ID = wikidata.create_Item(key)
         #add entrez claim to mouse gene item
         mouse_entrez = get(homolog_json,'entrezgene')
-        wikidata.addClaim(ID, 'p3521',mouse_entrez)    
-    HGItem.setField("ortholog", ID)
+        wikidata.addClaim(ID, 'p351',str(mouse_entrez))
+        #following convention of having capitalised wikidata identifiers    
+    HGItem.setField("ortholog", ID.title())
     
     
     
@@ -254,7 +259,7 @@ def parse_MouseGene_json(homolog_json,gene_json):
     MGItem.setField("GenLoc_end", get(get(root, 'genomic_pos'), 'end'))
     MGItem.setField("RefSeq",get(get(root, 'refseq'), 'rna'))
     MGItem.setField("AltSymbols", get(root, 'alias'))
-    MGItem.setField("RNA ID",get(get(root, 'accession'), 'rna'))
+    MGItem.setField("RefSeq RNA ID",get(get(root, 'accession'), 'rna'))
     
     #encodes  -- search for mouse protein
     key = get(root,'name') 
@@ -269,10 +274,11 @@ def parse_MouseGene_json(homolog_json,gene_json):
     #search result is null or corresponding human gene doesnot exist
     if not ID:
         #create mouse protein item
+        print "creating mouse protein with uniprot ID",uniprot
         ID = wikidata.create_Item(key)
         #add uniprot claim to mouse protein item
         wikidata.addClaim(ID, 'p352',uniprot)    
-    MGItem.setField("encodes", ID)
+    MGItem.setField("encodes", ID.title())
     
     #ortholog
     key = get(gene_json,'symbol')
@@ -285,18 +291,20 @@ def parse_MouseGene_json(homolog_json,gene_json):
     #search result is null or corresponding human gene doesnot exist
     if not ID:
         #create human gene item
-        ID = wikidata.create_Item(key)
+        #ID = wikidata.create_Item(key)
         #add entrez claim to human gene item
-        human_entrez = get(gene_json,'entrezgene')
-        wikidata.addClaim(ID, 'p3521',human_entrez)    
-    MGItem.setField("encodes", ID)
+        #human_entrez = get(gene_json,'entrezgene')
+        #wikidata.addClaim(ID, 'p3521',human_entrez)
+        #TO-DO
+        print "ERROR"    
+    MGItem.setField("encodes", ID.title())
     
     return MGItem
 
 #TO-do ec classification
 def parse_MouseProtein_json(Homolog_json):
     root = Homolog_json
-    MPItem = HumanProtein()
+    MPItem = MouseProtein()
     
     #found in taxon wikidata item mouse=Q83310 , protein=Q8054
     MPItem.setField("Name", get(root,'name'))
@@ -334,11 +342,13 @@ def parse_MouseProtein_json(Homolog_json):
                     
                 #Create GO Item if it does not exist
                 if not GID:
+                    
                     GID = wikidata.create_Item(title)
+                    print "created GO item ",GO_ID,GID
                     #add created id's for the go terms 
                     
                     wikidata.addClaim(GID, GO_ID, val['id'][3:])
-                ID.append(GID)
+                ID.append(GID.title())
             if key == 'CC':
                 MPItem.setField("cell component",ID)
             if key == 'MF':
@@ -370,9 +380,10 @@ def parse_MouseProtein_json(Homolog_json):
     if not ID:
         #create mouse gene item
         ID = wikidata.create_Item(key)
+        print "creating mouse gene", entrez
         #add entrez claim to mouse gene item
         wikidata.addClaim(ID, 'p351',entrez)    
-    MPItem.setField("encoded by", ID)
+    MPItem.setField("encoded by", ID.title())
     
     return MPItem
 
@@ -423,10 +434,11 @@ def parse_HumanProtein_json(gene_json):
                 #Create GO Item if it does not exist
                 if not GID:
                     GID = wikidata.create_Item(title)
+                    print "created GO item ",GO_ID,GID
                     #add created id's for the go terms
                     
                     wikidata.addClaim(GID, GO_ID, val['id'][3:])
-                ID.append(GID)
+                ID.append(GID.title())
             if key == 'CC':
                 HPItem.setField("cell component",ID)
             if key == 'MF':
@@ -453,9 +465,10 @@ def parse_HumanProtein_json(gene_json):
     if not ID:
         #create human gene item
         ID = wikidata.create_Item(key)
+        print "created human gene", entrez
         #add entrez claim to human gene item
         wikidata.addClaim(ID, 'p351',str(entrez))    
-    HPItem.setField("encoded by", ID)
+    HPItem.setField("encoded by", ID.title())
 
     
     return HPItem
@@ -502,7 +515,7 @@ def parse_json(gene_json, meta_json, homolog_json):
     
     HG = parse_HumanGene_json(gene_json,homolog_json)
     
-    MP = parse_MouseProtein_json(gene_json)   
+    MP = parse_MouseProtein_json(homolog_json)   
     
     MG = parse_MouseGene_json(homolog_json,gene_json)
     
