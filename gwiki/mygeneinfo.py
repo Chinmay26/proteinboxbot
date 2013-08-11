@@ -17,6 +17,14 @@ UNIP_URL = settings.uniprot_url
 
 MOUSE_TAXON_ID = 10090
 
+refseq_valid_accession_prefixes = ["NG_", "NT_", "NC_", "AW_", "NW_", "NS_", "NZ_"]
+
+refseq_RNA_ID_valid_accession_prefixes = ["NM_", "NR_", "XM_", "XR_"]
+
+refseq_Protein_ID_valid_accession_prefixes = ["NP_", "AP_", "YP_", "XP_", "ZP_"]
+
+
+
 def getJson(url):
     ufile = None
     try:
@@ -45,6 +53,26 @@ def get(json,key):
     return result
     
     
+
+def parse_accession(initial_list, type):
+    final_rectified = []
+    if type == "RefSeq Protein ID":
+        for id in initial_list:
+            if unicode(id[0:3]) in refseq_Protein_ID_valid_accession_prefixes:
+                final_rectified.append(id)
+            
+    elif type == "RefSeq":
+        for id in initial_list:
+            if unicode(id[0:3]) in refseq_valid_accession_prefixes:
+                final_rectified.append(id)
+                
+    elif type == "RefSeq RNA ID":
+        for id in initial_list:
+            if unicode(id[0:3]) in refseq_RNA_ID_valid_accession_prefixes:
+                final_rectified.append(id)
+                
+    return final_rectified
+
 
 def _queryUniprot(entrez):
     return uniprotAccForEntrezId(entrez)
@@ -167,7 +195,7 @@ def parse_HumanGene_json(gene_json,homolog_json):
     root = gene_json
     
     HGItem.setField("found in taxon", "Q5")
-    HGItem.setField("description","Human Gene")
+    HGItem.setField("description","human Gene")
     HGItem.setField("subclass of","Q7187")
 
     #for genes label = HGNC symbol
@@ -182,9 +210,14 @@ def parse_HumanGene_json(gene_json,homolog_json):
     HGItem.setField("GenLoc_chr", get(get(root, 'genomic_pos'), 'chr'))
     HGItem.setField("GenLoc_start", get(get(root, 'genomic_pos'), 'start'))
     HGItem.setField("GenLoc_end", get(get(root, 'genomic_pos'), 'end'))
-    HGItem.setField("RefSeq",get(get(root, 'refseq'), 'rna'))
     HGItem.setField("AltSymbols", get(root, 'alias'))
-    HGItem.setField("RefSeq RNA ID",get(get(root, 'accession'), 'rna'))
+    
+    #adding id's based on valid refseq prefixes
+    initial = get(get(root, 'refseq'), 'rna')
+    HGItem.setField("RefSeq",parse_accession(initial, "RefSeq"))
+    initial = get(get(root, 'accession'), 'rna')
+    HGItem.setField("RefSeq RNA ID",parse_accession(initial, "RefSeq RNA ID"))
+    
     HGItem.setField("HGNC ID", get(root, 'HGNC'))
     HGItem.setField("OMIM ID",get(root,'MIM'))
     
@@ -221,11 +254,12 @@ def parse_HumanGene_json(gene_json,homolog_json):
     #search result is null or corresponding mouse gene doesnot exist
     if not ID:
         #create mouse gene item
-        print "creating mouse gene item -- with entrez", mouse_entrez
+        
         ID = wikidata.create_Item(key)
         #add entrez claim to mouse gene item
         mouse_entrez = get(homolog_json,'entrezgene')
         wikidata.addClaim(ID, 'p351',str(mouse_entrez))
+        print "created mouse gene item -- with entrez", mouse_entrez
         #following convention of having capitalised wikidata identifiers    
     HGItem.setField("ortholog", ID.title())
     
@@ -244,7 +278,7 @@ def parse_MouseGene_json(homolog_json,gene_json):
     
     MGItem.setField("found in taxon", "Q83310")
     MGItem.setField("subclass of","Q7187")
-    MGItem.setField("description","Mouse Gene")
+    MGItem.setField("description","mouse Gene")
     
     #for mouse gene label = MGI symbol
     MGItem.setField("Name",  get(root, 'symbol'))
@@ -257,9 +291,15 @@ def parse_MouseGene_json(homolog_json,gene_json):
     MGItem.setField("GenLoc_chr", get(get(root, 'genomic_pos'), 'chr'))
     MGItem.setField("GenLoc_start", get(get(root, 'genomic_pos'), 'start'))
     MGItem.setField("GenLoc_end", get(get(root, 'genomic_pos'), 'end'))
-    MGItem.setField("RefSeq",get(get(root, 'refseq'), 'rna'))
     MGItem.setField("AltSymbols", get(root, 'alias'))
-    MGItem.setField("RefSeq RNA ID",get(get(root, 'accession'), 'rna'))
+   
+    
+    
+    #adding id's based on valid refseq prefixes
+    initial = get(get(root, 'refseq'), 'rna')
+    MGItem.setField("RefSeq",parse_accession(initial, "RefSeq"))
+    initial = get(get(root, 'accession'), 'rna')
+    MGItem.setField("RefSeq RNA ID",parse_accession(initial, "RefSeq RNA ID"))
     
     #encodes  -- search for mouse protein
     key = get(root,'name') 
@@ -297,7 +337,7 @@ def parse_MouseGene_json(homolog_json,gene_json):
         #wikidata.addClaim(ID, 'p3521',human_entrez)
         #TO-DO
         print "ERROR"    
-    MGItem.setField("encodes", ID.title())
+    MGItem.setField("ortholog", ID.title())
     
     return MGItem
 
@@ -308,7 +348,7 @@ def parse_MouseProtein_json(Homolog_json):
     
     #found in taxon wikidata item mouse=Q83310 , protein=Q8054
     MPItem.setField("Name", get(root,'name'))
-    MPItem.setField("description", "Mouse Protein")
+    MPItem.setField("description", "mouse Protein")
     MPItem.setField("found in taxon", "Q83310")
     MPItem.setField("subclass of","Q8054")
     name = get(root, 'name')
@@ -319,7 +359,8 @@ def parse_MouseProtein_json(Homolog_json):
     MPItem.setField("Uniprot ID", uniprot)
     
     #MPItem.setField("EC number", get(root, 'ec'))
-    MPItem.setField("RefSeq Protein ID",get(get(root, 'refseq'), 'protein'))
+    initial = get(get(root, 'refseq'), 'protein')
+    MPItem.setField("RefSeq Protein ID",parse_accession(initial,"RefSeq Protein ID"))
     MPItem.setField("Ensembl Protein ID", get(get(root, 'ensembl'), 'protein'))
     
     #GO TERMS
@@ -330,25 +371,49 @@ def parse_MouseProtein_json(Homolog_json):
         for key in GO_DICT:
             res_list = GO_DICT[key]
             ID = []
-            for val in res_list:
-                #search for the item
-                title = val['term']
+            #single term
+            if 'term' in res_list:
+                title = res_list['term']
                 res = wikidata.search_Item(title)
-                GID = []
-                #search for the corresponding go term
                 if res:
                     #fix val['id']='GO:223'  remove the first three elements 
-                    GID = wikidata.search_claim(res, GO_ID, val['id'][3:])
+                    GID = wikidata.search_claim(res, GO_ID, res_list['id'][3:])
                     
                 #Create GO Item if it does not exist
                 if not GID:
-                    
                     GID = wikidata.create_Item(title)
                     print "created GO item ",GO_ID,GID
-                    #add created id's for the go terms 
+                    #add created id's for the go terms
                     
-                    wikidata.addClaim(GID, GO_ID, val['id'][3:])
+                    wikidata.addClaim(GID, GO_ID, res_list['id'][3:])
                 ID.append(GID.title())
+                
+            else:
+                #mutiple terms in go field              
+                for val in res_list:
+                #search for the item
+                
+                    title = val['term']
+                # title has multiple words seperated by /   
+                # found
+                    if title.find('/') != -1:
+                        match = re.search(r'([\w ]*)\/.*',title)
+                        title = match.group(1)
+                    res = wikidata.search_Item(title)
+                    GID = []
+                #search for the corresponding go term
+                    if res:
+                    #fix val['id']='GO:223'  remove the first three elements 
+                        GID = wikidata.search_claim(res, GO_ID, val['id'][3:])
+                    
+                #Create GO Item if it does not exist
+                    if not GID:
+                        GID = wikidata.create_Item(title)
+                        print "created GO item ",GO_ID,GID
+                    #add created id's for the go terms
+                    
+                        wikidata.addClaim(GID, GO_ID, val['id'][3:])
+                    ID.append(GID.title())
             if key == 'CC':
                 MPItem.setField("cell component",ID)
             if key == 'MF':
@@ -395,7 +460,7 @@ def parse_HumanProtein_json(gene_json):
     #found in taxon wikidata item human=Q5 , protein=Q8054
     #for proteins label= HGNC fullname
     HPItem.setField("Name", get(root,'name'))
-    HPItem.setField("description", "Human Protein")
+    HPItem.setField("description", "human Protein")
     HPItem.setField("found in taxon", "Q5")
     HPItem.setField("subclass of","Q8054")
     name = get(root, 'name')
@@ -405,8 +470,10 @@ def parse_HumanProtein_json(gene_json):
     uniprot = findReviewedUniprotEntry(get(root, 'uniprot'), entrez)
     HPItem.setField("Uniprot ID", uniprot)
     
-   # HPItem.setField("EC number", get(root, 'ec'))
-    HPItem.setField("RefSeq Protein ID",get(get(root, 'refseq'), 'protein'))
+    # HPItem.setField("EC number", get(root, 'ec'))
+    #adding refseq id's based on valid accession prefixes 
+    initial = get(get(root, 'refseq'), 'protein')
+    HPItem.setField("RefSeq Protein ID",parse_accession(initial,"RefSeq Protein ID"))
     HPItem.setField("Ensembl Protein ID", get(get(root, 'ensembl'), 'protein'))
     
     #Wikidata items for GO terms
@@ -416,20 +483,13 @@ def parse_HumanProtein_json(gene_json):
         for key in GO_DICT:
             res_list = GO_DICT[key]
             ID = []
-            for val in res_list:
-                #search for the item
-                title = val['term']
-                # title has multiple words seperated by /   
-                # found
-                if title.find('/') != -1:
-                    match = re.search(r'([\w ]*)\/.*',title)
-                    title = match.group(1)
+            #single term
+            if 'term' in res_list:
+                title = res_list['term']
                 res = wikidata.search_Item(title)
-                GID = []
-                #search for the corresponding go term
                 if res:
                     #fix val['id']='GO:223'  remove the first three elements 
-                    GID = wikidata.search_claim(res, GO_ID, val['id'][3:])
+                    GID = wikidata.search_claim(res, GO_ID, res_list['id'][3:])
                     
                 #Create GO Item if it does not exist
                 if not GID:
@@ -437,8 +497,38 @@ def parse_HumanProtein_json(gene_json):
                     print "created GO item ",GO_ID,GID
                     #add created id's for the go terms
                     
-                    wikidata.addClaim(GID, GO_ID, val['id'][3:])
+                    wikidata.addClaim(GID, GO_ID, res_list['id'][3:])
                 ID.append(GID.title())
+                
+            else:
+                #mutiple terms in go field              
+                for val in res_list:
+                #search for the item
+                
+                    title = val['term']
+                # title has multiple words seperated by /   
+                # found
+                    if title.find('/') != -1:
+                        match = re.search(r'([\w ]*)\/.*',title)
+                        title = match.group(1)
+                    res = wikidata.search_Item(title)
+                    GID = []
+                #search for the corresponding go term
+                    if res:
+                    #fix val['id']='GO:223'  remove the first three elements 
+                        GID = wikidata.search_claim(res, GO_ID, val['id'][3:])
+                    
+                #Create GO Item if it does not exist
+                    if not GID:
+                        GID = wikidata.create_Item(title)
+                        print "created GO item ",GO_ID,GID
+                    #add created id's for the go terms
+                    
+                        wikidata.addClaim(GID, GO_ID, val['id'][3:])
+                    ID.append(GID.title())
+                
+                
+
             if key == 'CC':
                 HPItem.setField("cell component",ID)
             if key == 'MF':
@@ -532,7 +622,7 @@ def Parse(entrez):
     
   
 if __name__ == '__main__':
-   Parse('5649')
+   Parse('1589')
 
  
   
