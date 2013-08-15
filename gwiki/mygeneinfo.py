@@ -376,9 +376,10 @@ def parse_MouseProtein_json(Homolog_json):
                 title = res_list['term']
                 res = wikidata.search_Item(title)
                 if res:
-                    #fix val['id']='GO:223'  remove the first three elements 
-                    GID = wikidata.search_claim(res, GO_ID, res_list['id'][3:])
-                    
+                    for val in res:
+                        if val['label'] == title:
+                            GID = val['id']
+                            break
                 #Create GO Item if it does not exist
                 if not GID:
                     GID = wikidata.create_Item(title)
@@ -403,8 +404,10 @@ def parse_MouseProtein_json(Homolog_json):
                     GID = []
                 #search for the corresponding go term
                     if res:
-                    #fix val['id']='GO:223'  remove the first three elements 
-                        GID = wikidata.search_claim(res, GO_ID, val['id'][3:])
+                        for val in res:
+                            if val['label'] == title:
+                                GID = val['id']
+                                break
                     
                 #Create GO Item if it does not exist
                     if not GID:
@@ -488,8 +491,10 @@ def parse_HumanProtein_json(gene_json):
                 title = res_list['term']
                 res = wikidata.search_Item(title)
                 if res:
-                    #fix val['id']='GO:223'  remove the first three elements 
-                    GID = wikidata.search_claim(res, GO_ID, res_list['id'][3:])
+                    for val in res:
+                        if val['label'] == title:
+                            GID = val['id']
+                            break
                     
                 #Create GO Item if it does not exist
                 if not GID:
@@ -515,8 +520,10 @@ def parse_HumanProtein_json(gene_json):
                     GID = []
                 #search for the corresponding go term
                     if res:
-                    #fix val['id']='GO:223'  remove the first three elements 
-                        GID = wikidata.search_claim(res, GO_ID, val['id'][3:])
+                        for val in res:
+                            if val['label'] == title:
+                                GID = val['id']
+                                break
                     
                 #Create GO Item if it does not exist
                     if not GID:
