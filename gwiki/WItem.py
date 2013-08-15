@@ -4,6 +4,41 @@ Created on Jul 10, 2013
 @author: chinmay
 '''
 class Item(object):
+    Entrez= 'Q1345229'
+    Ensembl  = 'Q1344256'
+    Uniprot  = 'Q905695'
+    property_list_sources = {
+              "HGNC ID"                 : Entrez  ,
+              "Homologene ID"           : Entrez  ,
+              "gene symbol"             : Entrez  ,
+              "Entrez Gene ID"          : Entrez  ,
+              "OMIM ID"                 : Entrez  ,
+              "Ensembl Gene ID"         : Ensembl ,
+              "ortholog"                : Entrez  ,
+              "Ensembl Transcript ID"   : Ensembl ,
+              "GenLoc_chr"              : Ensembl ,
+              "GenLoc_start"            : Ensembl ,   
+              "GenLoc_end"              : Ensembl ,
+              "RefSeq"                  : Entrez  ,
+             # "AltSymbols"
+              "species"                 : Entrez  ,
+              "RefSeq RNA ID"           : Entrez  ,
+              "EC classification"       : Entrez  ,              
+              "PDB"                     : Uniprot ,
+              "Uniprot ID"              : Uniprot ,
+              "molecular function"      : Entrez  ,
+             # "encoded by"              
+              "cell component"          : Entrez  ,
+              "biological process"      : Entrez  ,
+              "RefSeq Protein ID"       : Entrez  ,
+              "Ensembl Protein ID"      : Ensembl ,
+              "Gene Ontology ID"        : Entrez
+             # "found in taxon",
+             # "subclass of"
+             # "encodes"
+             # "encoded by "
+                             
+                             }
         
     def coerce_unicode(self, obj):
         if isinstance(obj, str):

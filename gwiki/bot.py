@@ -47,7 +47,11 @@ class bot(object):
             descriptions = {"en":str(des)}
             Item.editDescriptions(descriptions)
         #CHECK item.editEntity()
-        #print Claims,type(Claims)
+        #Specify the source using property "imported from"
+        imported_from = "p143"
+        source_for_claim = pywikibot.Claim(Repo,unicode(imported_from))
+        
+        
         for property in Entity.properties:
             #only if the property is to be updated
             pfield = Entity.properties[property]
@@ -81,6 +85,12 @@ class bot(object):
                                     print 'Item not exists'
                                 val = valitem
                             claim.setTarget(val)
+                            
+                            #set the source item
+                            if pfield in WItem.Item.property_list_sources:
+                                source_Item = pywikibot.ItemPage(Repo,WItem.Item.property_list_sources[pfield])
+                                source_for_claim.setTarget(unicode(source_Item))
+                            # claim = value + source
                             Item.addClaim(claim,bot=True)
                             print val,pfield,Item
                         
@@ -109,8 +119,20 @@ class bot(object):
                  
                     claim.setTarget(val)
                     if val != existing_val:
+                        #add source for claim
+                        if pfield in WItem.Item.property_list_sources:
+                            source_Item = pywikibot.ItemPage(Repo,WItem.Item.property_list_sources[pfield])
+                            source_for_claim.setTarget(unicode(source_Item))
+                        #add the claim
                         Item.addClaim(claim,bot=True)
                         print pfield, property,val,Item
+                        
+                        
+        #adding sources
+        
+        
+        #genloc start,end,chr  ---> genloc assembly
+        # ortholog --> species
                     
                 
                 
