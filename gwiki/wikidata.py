@@ -119,14 +119,75 @@ def search_claim(Items,property,value):
     return Identifier
     
     
-def addClaim(ID,property,value):
+def addClaim(ID,property,value,pfield):
     mysite = pywikibot.Site("wikidata","wikidata")
     repo = mysite.data_repository()
     item = pywikibot.ItemPage(repo,ID)
     item.get()
     claim = pywikibot.Claim(repo,property)
     claim.setTarget(value)
+    
+    
+    sourceField = WItem.Item.property_list_sources[pfield]
+    sourceItem = pywikibot.ItemPage(repo,sourceField)
+    source = pywikibot.Claim(repo,unicode('p143'))#imported from
+    source.setTarget(sourceItem)
+    
     item.addClaim(claim, bot = True)
+    claim.addSource(source)
+    
+def search_HumanProtein(title):
+    
+    site = pywikibot.getSite('en')
+    page = pywikibot.Page(site,title)
+    item = pywikibot.ItemPage.fromPage(page)
+    if item.exists():
+        return item.getID()
+    else:
+        return None
+    
+
+    
+def setSource(property,pfield,pvalue):
+    mysite = pywikibot.Site("wikidata","wikidata")
+    repo = mysite.data_repository()
+    
+    sourceField = WItem.Item.property_list_sources[pfield]
+    sourceItem = pywikibot.ItemPage(repo,sourceField)
+    source = pywikibot.Claim(repo,unicode('p143'))#imported from
+    source.setTarget(sourceItem)
+    
+    claim1 = pywikibot.Claim(repo,unicode(property))
+    claim1.setTarget(pvalue)
+    claim1.addSource(source)
+    
+    
+def setHumanProtein(Name,label,uniprot):
+        
+    res1 = search_HumanProtein(label)
+    mysite = pywikibot.Site("wikidata","wikidata")
+    repo = mysite.data_repository()
+    item = pywikibot.ItemPage(repo,res1)
+    item.get()
+    labels = {"en":unicode(Name)
+              }
+    item.editLabels(labels)
+    if 'p352' in item.claims:
+        return
+    else:
+        UPclaim = pywikibot.Claim(repo,unicode('p352'))
+        UPclaim.setTarget(uniprot)
+        
+        source = pywikibot.Claim(repo,unicode('p143'))
+        sourceItem = pywikibot.ItemPage(repo,'Q905695')
+        source.setTarget(sourceItem)
+        
+        item.addClaim(UPclaim, bot = True)
+        UPclaim.addSource(source)
+        
+    
+    
+    
     
 
 #def search_Item(title):
