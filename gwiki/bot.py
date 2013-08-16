@@ -7,6 +7,7 @@ import pywikibot,sys,re
 import mygeneinfo,argparse
 import genewikidata
 import wikidata,WItem
+import pickle
 
 try:
     import settings
@@ -17,7 +18,7 @@ except ImportError as e:
 class bot(object):
     #CHECK path to log file. previous bot log file was ---> "http://api.genewikiplus.org/log/submit"
     #log_file_path = "/home/chinmay/GSOC-rough/log1.txt"
-    #log=[]
+    log=[]
     genewikidata = None
     def __init__(self,genewikidata):
         
@@ -32,8 +33,18 @@ class bot(object):
         except AssertionError:
             raise TypeError("Setup pywikipedia-rewrite.")
         
-    def logger(self):
+    def logger(self,exit_status,Item,msg):
         ''' to-do '''
+        
+        log_entry = {
+                    "status"  : exit_status,
+                    "Item"    : Item,
+                    "message" : msg
+                    }
+        self.log.append(log_entry)
+        print log_entry
+        with open("/home/chinmay/log","a") as logfile:
+            pickle.dump(log_entry,logfile)
             
 
         
@@ -89,9 +100,10 @@ class bot(object):
                             #set the source item
                             if pfield in WItem.Item.property_list_sources:
                                 source_Item = pywikibot.ItemPage(Repo,WItem.Item.property_list_sources[pfield])
-                                source_for_claim.setTarget(unicode(source_Item))
+                                source_for_claim.setTarget(source_Item)
                             # claim = value + source
                             Item.addClaim(claim,bot=True)
+                            claim.addSource(source_for_claim)
                             print val,pfield,Item
                         
                         
@@ -122,15 +134,22 @@ class bot(object):
                         #add source for claim
                         if pfield in WItem.Item.property_list_sources:
                             source_Item = pywikibot.ItemPage(Repo,WItem.Item.property_list_sources[pfield])
-                            source_for_claim.setTarget(unicode(source_Item))
+                            source_for_claim.setTarget(source_Item)
                         #add the claim
                         Item.addClaim(claim,bot=True)
+                        claim.addSource(source_for_claim)
                         print pfield, property,val,Item
                         
-                        
-        #adding sources
-        
-        
+                 
+        if updatedClaims:
+            message = "Successfully edited claims "
+            for claim in updatedClaims:
+                message =  message + "\n{field} :  {oldval} ---> {newval}   ".format(field=claim,
+                                                                             oldval=updatedClaims[claim][0],newval=updatedClaims[claim][1])
+        else:
+            message = "No modification done"
+            
+        return message
         #genloc start,end,chr  ---> genloc assembly
         # ortholog --> species
                     
@@ -164,9 +183,13 @@ class bot(object):
                 
                #print updatedClaims
         except Exception as err:
-            print 'handle exceptions like -- Item not exists, property invalidtype '
+            message = 'Failed to update HumanProtein Wikidata item '
+            message.append(err)
+            self.logger(1, Item.getID(), message)
+            raise 
                 
-        self.write(Item,updatedProtein,updatedClaims)
+        message = self.write(Item,updatedProtein,updatedClaims)
+        self.logger(0, Item.getID(), msg = message )
             
     def run_HumanGene(self,HumanGene):
         
@@ -178,16 +201,20 @@ class bot(object):
             ID = wikidata.search_claim(res,entrez,key)
             Item = self.genewikidata.get_item(ID)
         else:
-            print "ERROR! CHECK TITLE SEARCH"
-            sys.exit(1)
+            message = 'Failed to search HumanGene Wikidata item with EntrezID={val}'.format(val=key)
+            raise e(message)
         try:
             CurHGene = wikidata.construct_from_item(Item, WItem.HumanGene())
             updatedHGene,summary,updatedClaims = CurHGene.updateWith(HumanGene)
               #print updatedClaims
         except Exception as err:
-            print 'handle exceptions like -- Item not exists, property invalidtype '
+            message = 'Failed to update HumanGene Wikidata item '
+            message.append(err)
+            self.logger(1, Item.getID(), message)
+            raise
                 
-        self.write(Item,updatedHGene,updatedClaims) 
+        message = self.write(Item,updatedHGene,updatedClaims)
+        self.logger(0, Item.getID(), msg = message ) 
             
     def run_MouseGene(self,MouseGene):
         
@@ -199,17 +226,21 @@ class bot(object):
             ID = wikidata.search_claim(res,entrez,key)
             Item = self.genewikidata.get_item(ID)
         else:
-            print "ERROR! CHECK TITLE SEARCH"
-            sys.exit(1)
+            message = 'Failed to search MouseGene Wikidata item with EntrezID={val}'.format(val=key)
+            raise 
         
         try:
             CurMGene = wikidata.construct_from_item(Item, WItem.MouseGene())
             updatedMGene,summary,updatedClaims = CurMGene.updateWith(MouseGene)
               #print updatedClaims
         except Exception as err:
-            print 'handle exceptions like -- Item not exists, property invalidtype '
+            message = 'Failed to update MouseGene Wikidata item '
+            message.append(err)
+            self.logger(1, Item.getID(), message)
+            raise
                 
-        self.write(Item,updatedMGene,updatedClaims)  
+        message = self.write(Item,updatedMGene,updatedClaims)
+        self.logger(0, Item.getID(), msg = message )  
             
     def run_MouseProtein(self,MouseProtein):
         
@@ -221,7 +252,7 @@ class bot(object):
             ID = wikidata.search_claim(res,uniprot,key)
             Item = self.genewikidata.get_item(ID)
         else:
-            print "ERROR! CHECK TITLE SEARCH"
+            message = 'Failed to search MouseProtein Wikidata item with UniprotID={val}'.format(val=key)
             sys.exit(1)
         
         
@@ -230,52 +261,78 @@ class bot(object):
             updatedMProtein,summary,updatedClaims = CurMProtein.updateWith(MouseProtein)
               #print updatedClaims
         except Exception as err:
-            print 'handle exceptions like -- Item not exists, property invalidtype '
+            message = 'Failed to update MouseProtein Wikidata item '
+            message.append(err)
+            self.logger(1, Item.getID(), message)
+            raise
                 
-        self.write(Item,updatedMProtein,updatedClaims)         
+        message = self.write(Item,updatedMProtein,updatedClaims)
+        self.logger(0, Item.getID(), msg = message )         
             
             
             
-    def run(self):
-         
-        source = self.genewikidata.title_and_entrez()
+    def run(self,Entrezlist=None):
+        
+        non_ready = ['3290','1267','1589','1718']
+        if not Entrezlist:
+            source = self.genewikidata.title_and_entrez()
+        else:
+            source = Entrezlist
       
         for title,entrez in source:
-            #construct items from mygeneinfo
-            HumanGene,HumanProtein,MouseGene,MouseProtein = mygeneinfo.Parse(entrez)
+            if entrez in non_ready:
+                continue
             
-            #print title,entrez
+            #construct items from mygeneinfo
+            HumanGene,HumanProtein,MouseGene,MouseProtein = mygeneinfo.Parse(str(entrez),title)
+            
+           
+            #title = HumanProtein.fieldsdict['Name']
             Wikidata_ID = self.genewikidata.get_identifier(title)
             #print Wikidata_ID
             if Wikidata_ID:
                 Item = self.genewikidata.get_item(Wikidata_ID)
-         
-         
-            self.run_HumanProtein(HumanProtein,Item)
-         
-            self.run_HumanGene(HumanGene)
                 
-            self.run_MouseProtein(MouseProtein)
+            try:
+                 
+         
+                self.run_HumanProtein(HumanProtein,Item)
+         
+                self.run_HumanGene(HumanGene)
                 
-            self.run_MouseGene(MouseGene)
+                self.run_MouseProtein(MouseProtein)
+                
+                self.run_MouseGene(MouseGene)
+                
+            except Exception as err:
+                print err
+                #message = 'Failed to wr Wikidata item '
+                #message.append(err)
+                #self.logger(1, Item.getID(), message)
+                
+                continue
         
             
             
             
-            
-      
 
-def main():
-    
-    BOT.run()
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description= '''Handling Gene wikidata items''')
     
-    #parser.add_argument('--HumanGene', action = 'HGENE', help = 'update HUMAN GENE wikidata items' )
+    parser.add_argument('--only', action='store', dest='update',help='A file with contents like "only = [<list of entrez ids>]"')
     
-    #parser.add_argument('--HumanProtein', action = 'HGENE', help = 'update Human Protein wikidata items')
+    args = parser.parse_args()
     
+    _only = []
+    
+    if args.update:
+        with open(args.update) as infile:
+            exec(infile)
+            try:
+                _only = only
+            except NameError:
+                sys.stderr.write('Specified update-only file has invalid format\n')
     BOT = bot(genewikidata.GeneWikidata())
-    main()
+    BOT.run(Entrezlist = _only)
     
