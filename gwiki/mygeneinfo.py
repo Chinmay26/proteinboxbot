@@ -23,9 +23,35 @@ refseq_RNA_ID_valid_accession_prefixes = ["NM_", "NR_", "XM_", "XR_"]
 
 refseq_Protein_ID_valid_accession_prefixes = ["NP_", "AP_", "YP_", "XP_", "ZP_"]
 
+def CreatedItemlogger(Item,Type,field,value):
+    '''
+    Maintains a log for new items created during construction of Human/Mouse Protein/Gene Wikidata items from mygeneinfo
+    Arguments:
+    -Item  : Wikidata item id 
+    -Type  : Canbe GO Term, MouseGene , MouseProtein, HumanGene
+    -field : Property added to Item
+    -value : Value of claim
+    '''
+    message = "Created new wikidata item  -->"
+    log_entry = {
+                 "Item" : Item , 
+                 "ItemType" : Type,
+                 "Claim added" : field,
+                 "Claim value" : value
+                 }
+    message = message + str(log_entry)
+    print message
+    with open("/home/chinmay/log","a") as logfile:
+        logfile.write(str(log_entry)+'\n')
+
 
 
 def getJson(url):
+    '''
+    get the json from http://mygene.info/gene/
+    Arguments:
+    -url : url - the entrez is already appended to url
+    '''
     ufile = None
     try:
         ufile = urllib2.urlopen(url)
@@ -41,6 +67,21 @@ def getJson(url):
         raise e
     
 def get(json,key):
+    """Provides the element at the specified key in the given JSON.
+    If the json object is a dict and the key is valid, returns that element.
+    If it's a list and has an element at json[0], it calls itself with json[0]
+    as its first argument (recursive).
+    If it's a unicode or normal string, it returns the unicode representation.
+    In all other cases, it returns an empty unicode string.
+
+    Example:
+    To access json['refseq']['protein'][0], you would write:
+    get(get(get(root, 'refseq'), 'protein'), 0))
+
+    Arguments:
+    - `json`: The JSON tree to parse from
+    - `node`: The top-level node to attempt to return.
+    """
     result = u''
     if isinstance(json, dict):
         result = json[key] if key in json else u''
@@ -55,6 +96,13 @@ def get(json,key):
     
 
 def parse_accession(initial_list, type):
+    '''
+    The values returned by mygeneinfo for refseq id's have to be filtered according to valid accession prefixes. 
+    The valid prefixes are specified globally as dicts-- refseq_Protein_ID_valid_accession_prefixes , refseq_valid_accession_prefixes , refseq_RNA_ID_valid_accession_prefixes
+    Arguments:
+    -initial  : value returned by mygeneinfo
+    -type     : can be RefSeq Protein ID, RefSeq , RefSeq RNA ID
+    '''
     final_rectified = []
     if type == "RefSeq Protein ID":
         for id in initial_list:
@@ -77,20 +125,7 @@ def parse_accession(initial_list, type):
 def _queryUniprot(entrez):
     return uniprotAccForEntrezId(entrez)
 
-def parse_go_category(entry):
 
-    # single term:
-    if 'term' in entry:
-        return {entry['id']:entry['term']}
-    # multiple terms
-    else:
-        terms = []
-        results = []
-        for x in entry:
-            if x['term'] not in terms:
-                results.append( {x['id']:x['term']} )
-            terms.append(x['term'])
-        return results
 
 def uniprotAccForEntrezId(entrez):
     '''Returns either one reviewed uniprot id or None.'''
@@ -188,9 +223,13 @@ def findReviewedUniprotEntry2(entries, entrez):
         else: return entry
 
 #To-do Gene Atlas image
-#Construct for human gene 
+
 def parse_HumanGene_json(gene_json,homolog_json):
-#edit: Refseq is a multivalue field
+    '''Construct the Human Gene from gene_json. The entire fields are specified in WItem
+    Arguments:
+    gene_json - mygeneinfo json document for given gene
+    homolog_json - mygeneinfo json_documnet for corresponding mouse gene 
+    '''
     HGItem = HumanGene()
     root = gene_json
     
@@ -233,12 +272,8 @@ def parse_HumanGene_json(gene_json,homolog_json):
         ID = wikidata.search_claim(res,uniprotID ,uniprot)
     #search result is null or corresponding human protein doesnot exist
     if not ID:
-        #create human protein item
-        #ID = wikidata.create_Item(key)
-        #add uniprot claim to human protein item
-        #wikidata.addClaim(ID, 'p352',uniprot)
-        #TO-DO
-        print "ERROR IN RETREIVING Human protein item"   
+        message = "Failed to retreive HumanProteinItem with Uniprot:{up}".format(up=uniprot)
+        raise wikidata.WikidataSearchError(message)   
     #following convention of having capitalised wikidata identifiers 
     HGItem.setField("encodes", ID.title())
     
@@ -259,7 +294,7 @@ def parse_HumanGene_json(gene_json,homolog_json):
         #add entrez claim to mouse gene item
         mouse_entrez = get(homolog_json,'entrezgene')
         wikidata.addClaim(ID, 'p351',str(mouse_entrez),'Entrez Gene ID')
-     #   wikidata.setSource(ID,'p351')
+        CreatedItemlogger(Item=ID,Type='Mouse Gene',field='Entrez',value=mouse_entrez)
         print "created mouse gene item -- with entrez", mouse_entrez
         #following convention of having capitalised wikidata identifiers    
     HGItem.setField("ortholog", ID.title())
@@ -273,7 +308,11 @@ def parse_HumanGene_json(gene_json,homolog_json):
 
 #Construct for mouse gene 
 def parse_MouseGene_json(homolog_json,gene_json):
-#edit: Refseq is a multivalue field
+    '''Construct the Mouse Gene from gene_json. The entire fields are specified in WItem
+    Arguments:
+    gene_json - mygeneinfo json document for given gene
+    homolog_json - mygeneinfo json_documnet for corresponding mouse gene 
+    '''
     MGItem = MouseGene()
     root = homolog_json
     
@@ -319,7 +358,7 @@ def parse_MouseGene_json(homolog_json,gene_json):
         ID = wikidata.create_Item(key)
         #add uniprot claim to mouse protein item
         wikidata.addClaim(ID, 'p352',uniprot, 'Uniprot ID')
-    #    wikidata.setSource(ID,'p352')    
+        CreatedItemlogger(Item=ID,Type='Mouse Protein',field='Uniprot',value='uniprot')
     MGItem.setField("encodes", ID.title())
     
     #ortholog
@@ -332,19 +371,19 @@ def parse_MouseGene_json(homolog_json,gene_json):
         ID = wikidata.search_claim(res,entrezID ,get(gene_json,'entrezgene'))
     #search result is null or corresponding human gene doesnot exist
     if not ID:
-        #create human gene item
-        #ID = wikidata.create_Item(key)
-        #add entrez claim to human gene item
-        #human_entrez = get(gene_json,'entrezgene')
-        #wikidata.addClaim(ID, 'p3521',human_entrez)
-        #TO-DO
-        print "ERROR"    
+        message="Failed to retreive Human Gene wikidata item with entrez:{ez}".format(ez=get(gene_json,'entrezgene')) 
+        raise wikidata.WikidataSearchError(message)
     MGItem.setField("ortholog", ID.title())
     
     return MGItem
 
 #TO-do ec classification
 def parse_MouseProtein_json(Homolog_json):
+    '''Construct the Mouse Protein from gene_json. The entire fields are specified in WItem
+    Arguments:
+    gene_json - mygeneinfo json document for given gene
+    homolog_json - mygeneinfo json_documnet for corresponding mouse gene 
+    '''
     root = Homolog_json
     MPItem = MouseProtein()
     
@@ -390,8 +429,10 @@ def parse_MouseProtein_json(Homolog_json):
                     #add created id's for the go terms
                     
                     wikidata.addClaim(GID, GO_ID, res_list['id'][3:],'Gene Ontology ID')
-                  
-                ID.append(GID.title())
+                    CreatedItemlogger(Item=GID,Type='GO TERM',field='Gene Ontology ID',value=res_list['id'])
+                    
+                if not GID.title() in ID:
+                    ID.append(GID.title())
                 
             else:
                 #mutiple terms in go field              
@@ -420,19 +461,16 @@ def parse_MouseProtein_json(Homolog_json):
                     #add created id's for the go terms
                     
                         wikidata.addClaim(GID, GO_ID, val['id'][3:],'Gene Ontology ID')
-                    #    wikidata.setSource(GO_ID,'Gene Ontology ID')
-                    ID.append(GID.title())
+                        CreatedItemlogger(Item=GID,Type='GO TERM',field='Gene Ontology ID',value=val['id'][3:])
+                    if not GID.title() in ID:
+                        ID.append(GID.title())
             if key == 'CC':
                 MPItem.setField("cell component",ID)
-            if key == 'MF':
+            elif key == 'MF':
                 MPItem.setField("molecular function",ID)
-            if key == 'BP':
+            elif key == 'BP':
                 MPItem.setField("biological process",ID)
     
-    #if get(root, 'go'):
-    #    MPItem.setField("cell component", parse_go_category(get(root['go'], 'CC')))
-    #    MPItem.setField("molecular function", parse_go_category(get(root['go'], 'MF')))
-    #    MPItem.setField("biological process", parse_go_category(get(root['go'], 'BP')))
     
     #PDB  - CHECK what if Human proteins donot have pdb Id?
     pdbs = rcsb.pdbs_for_uniprot(uniprot)
@@ -455,13 +493,19 @@ def parse_MouseProtein_json(Homolog_json):
         ID = wikidata.create_Item(key)
         print "creating mouse gene", entrez
         #add entrez claim to mouse gene item
-        wikidata.addClaim(ID, 'p351',entrez,'Entrez Gene ID')    
+        wikidata.addClaim(ID, 'p351',entrez,'Entrez Gene ID')   
+        CreatedItemlogger(Item=ID,Type='Mouse Gene',field='Entrez Gene ID',value=entrez) 
     MPItem.setField("encoded by", ID.title())
     
     return MPItem
 
 #TO-DO EC classification
 def parse_HumanProtein_json(gene_json,label):
+    '''Construct the Human Gene from gene_json. The entire fields are specified in WItem
+    Arguments:
+    gene_json - mygeneinfo json document for given gene
+    homoog_json - mygeneinfo json_documnet for corresponding mouse gene 
+    '''
     root = gene_json
     HPItem = HumanProtein()
     
@@ -513,11 +557,10 @@ def parse_HumanProtein_json(gene_json,label):
                     GID = wikidata.create_Item(title)
                     print "created GO item ",GO_ID,GID
                     #add created id's for the go terms
-                    
-                    
                     wikidata.addClaim(GID, GO_ID, res_list['id'][3:],'Gene Ontology ID')
-                  #  wikidata.setSource(GO_ID,'Gene Ontology ID')
-                ID.append(GID.title())
+                    CreatedItemlogger(Item=GID,Type='GO TERM',field='Gene Ontology ID',value=res_list['id'])
+                if not GID.title() in ID:
+                    ID.append(GID.title())
                 
             else:
                 #mutiple terms in go field              
@@ -543,19 +586,19 @@ def parse_HumanProtein_json(gene_json,label):
                     if not GID:
                         GID = wikidata.create_Item(title)
                         print "created GO item ",GO_ID,GID
-                    #add created id's for the go terms
                     
                         wikidata.addClaim(GID, GO_ID, val['id'][3:],'Gene Ontology ID')
-                   #     wikidata.setSource(GO_ID,'Gene Ontology ID')
-                    ID.append(GID.title())
+                        CreatedItemlogger(Item=GID,Type='GO TERM',field='Gene Ontology ID',value=val['id'][3:])
+                    if not GID.title() in ID:
+                        ID.append(GID.title())
                 
                 
 
             if key == 'CC':
                 HPItem.setField("cell component",ID)
-            if key == 'MF':
+            elif key == 'MF':
                 HPItem.setField("molecular function",ID)
-            if key == 'BP':
+            elif key == 'BP':
                 HPItem.setField("biological process",ID)
     
     #PDB
@@ -579,7 +622,8 @@ def parse_HumanProtein_json(gene_json,label):
         ID = wikidata.create_Item(key)
         print "created human gene", entrez
         #add entrez claim to human gene item
-        wikidata.addClaim(ID, 'p351',str(entrez),'Entrez Gene ID')    
+        wikidata.addClaim(ID, 'p351',str(entrez),'Entrez Gene ID') 
+        CreatedItemlogger(Item=ID,Type='Human Gene',field='Entrez Gene ID',value=entrez)    
     HPItem.setField("encoded by", ID.title())
 
     
@@ -637,7 +681,11 @@ def parse_json(gene_json, meta_json, homolog_json,label):
     
     
 def Parse(entrez,label):
-    
+    '''Return Human Protein,HumanGene,MouseProtein,MouseGene objects for given entrez id.
+    Arguments:
+    -entrez  : gene entrez id
+    -label   : Human protein wikidata item label
+    '''
     return parse_json(**get_json_documents(entrez,label))
 
     
