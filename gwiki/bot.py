@@ -6,7 +6,7 @@ Created on Jun 20, 2013
 import pywikibot,sys,re
 import mygeneinfo,argparse
 import genewikidata
-import wikidata,WItem
+import wikidata,WItem,Wikititle
 import pickle
 
 try:
@@ -44,7 +44,7 @@ class bot(object):
         self.log.append(log_entry)
         print log_entry
         with open("/home/chinmay/log","a") as logfile:
-            pickle.dump(log_entry,logfile)
+            logfile.write(str(log_entry)+'\n')
             
 
         
@@ -103,7 +103,8 @@ class bot(object):
                                 source_for_claim.setTarget(source_Item)
                             # claim = value + source
                             Item.addClaim(claim,bot=True)
-                            claim.addSource(source_for_claim)
+                            if pfield in WItem.Item.property_list_sources:
+                                claim.addSource(source_for_claim)
                             print val,pfield,Item
                         
                         
@@ -181,12 +182,13 @@ class bot(object):
             CurProtein = wikidata.construct_from_item(Item,WItem.HumanProtein())
             updatedProtein,summary,updatedClaims = CurProtein.updateWith(HumanProtein)
                 
-               #print updatedClaims
+
         except Exception as err:
-            message = 'Failed to update HumanProtein Wikidata item '
-            message.append(err)
-            self.logger(1, Item.getID(), message)
-            raise 
+            if isinstance(err,wikidata.WikidataConstructItem):
+                message = 'WikidataParseFailure. ErrorCause:{e} '.format(e=err)
+                raise wikidata.WikidataConstructItem(message)
+            else:
+                raise err
                 
         message = self.write(Item,updatedProtein,updatedClaims)
         self.logger(0, Item.getID(), msg = message )
@@ -199,19 +201,23 @@ class bot(object):
         if res:
             entrez = 'p351'
             ID = wikidata.search_claim(res,entrez,key)
+            if not ID:
+                message = 'Failed to retreive HumanGene item with entrez:{EZ} from search result:{RES}'.format(RES=res,EZ=key)
+                raise wikidata.WikidataSearchError(message)
             Item = self.genewikidata.get_item(ID)
         else:
-            message = 'Failed to search HumanGene Wikidata item with EntrezID={val}'.format(val=key)
-            raise e(message)
+            message = 'Failed to search already created HumanGene Wikidata item with EntrezID={val}'.format(val=key)
+            raise wikidata.WikidataSearchError(message)
         try:
             CurHGene = wikidata.construct_from_item(Item, WItem.HumanGene())
             updatedHGene,summary,updatedClaims = CurHGene.updateWith(HumanGene)
               #print updatedClaims
         except Exception as err:
-            message = 'Failed to update HumanGene Wikidata item '
-            message.append(err)
-            self.logger(1, Item.getID(), message)
-            raise
+            if isinstance(err,wikidata.WikidataConstructItem):
+                message = 'WikidataParseFailure. ErrorCause:{e} '.format(e=err)
+                raise wikidata.WikidataConstructItem(message)
+            else:
+                raise err
                 
         message = self.write(Item,updatedHGene,updatedClaims)
         self.logger(0, Item.getID(), msg = message ) 
@@ -224,20 +230,24 @@ class bot(object):
         if res:
             entrez = 'p351'
             ID = wikidata.search_claim(res,entrez,key)
+            if not ID:
+                message = 'Failed to retreive MouseGene item with entrez:{EZ} from search result:{RES}'.format(RES=res,EZ=key)
+                raise wikidata.WikidataSearchError(message)
             Item = self.genewikidata.get_item(ID)
         else:
-            message = 'Failed to search MouseGene Wikidata item with EntrezID={val}'.format(val=key)
-            raise 
+            message = 'Failed to search already created MouseGene Wikidata item with EntrezID={val}'.format(val=key)
+            raise wikidata.WikidataSearchError(message)
         
         try:
             CurMGene = wikidata.construct_from_item(Item, WItem.MouseGene())
             updatedMGene,summary,updatedClaims = CurMGene.updateWith(MouseGene)
               #print updatedClaims
         except Exception as err:
-            message = 'Failed to update MouseGene Wikidata item '
-            message.append(err)
-            self.logger(1, Item.getID(), message)
-            raise
+            if isinstance(err,wikidata.WikidataConstructItem):
+                message = 'WikidataParseFailure. ErrorCause:{e} '.format(e=err)
+                raise wikidata.WikidataConstructItem(message)
+            else:
+                raise err
                 
         message = self.write(Item,updatedMGene,updatedClaims)
         self.logger(0, Item.getID(), msg = message )  
@@ -250,10 +260,13 @@ class bot(object):
         if res:
             uniprot = 'p352'
             ID = wikidata.search_claim(res,uniprot,key)
+            if not ID:
+                message = 'Failed to retreive MouseProtein item with uniprot:{UP} from search result:{RES}'.format(RES=res,UP=key)
+                raise wikidata.WikidataSearchError(message)
             Item = self.genewikidata.get_item(ID)
         else:
-            message = 'Failed to search MouseProtein Wikidata item with UniprotID={val}'.format(val=key)
-            sys.exit(1)
+            message = 'Failed to search already created MouseProtein Wikidata item with UniprotID={val}'.format(val=key)
+            raise wikidata.WikidataSearchError(message)
         
         
         try:
@@ -261,10 +274,11 @@ class bot(object):
             updatedMProtein,summary,updatedClaims = CurMProtein.updateWith(MouseProtein)
               #print updatedClaims
         except Exception as err:
-            message = 'Failed to update MouseProtein Wikidata item '
-            message.append(err)
-            self.logger(1, Item.getID(), message)
-            raise
+            if isinstance(err,wikidata.WikidataConstructItem):
+                message = 'WikidataParseFailure. ErrorCause:{e} '.format(e=err)
+                raise wikidata.WikidataConstructItem(message)
+            else:
+                raise err
                 
         message = self.write(Item,updatedMProtein,updatedClaims)
         self.logger(0, Item.getID(), msg = message )         
@@ -273,15 +287,12 @@ class bot(object):
             
     def run(self,Entrezlist=None):
         
-        non_ready = ['3290','1267','1589','1718']
         if not Entrezlist:
-            source = self.genewikidata.title_and_entrez()
+            source = Wikititle.getResult()
         else:
             source = Entrezlist
       
-        for title,entrez in source:
-            if entrez in non_ready:
-                continue
+        for entrez,title in source:
             
             #construct items from mygeneinfo
             HumanGene,HumanProtein,MouseGene,MouseProtein = mygeneinfo.Parse(str(entrez),title)
@@ -305,10 +316,13 @@ class bot(object):
                 self.run_MouseGene(MouseGene)
                 
             except Exception as err:
+                if isinstance(err,wikidata.WikidataSearchError):
+                    err_msg = 'Terminating bot operation. Cause:{e}'.format(e=err)
+                    self.logger(1,'invalid',msg=err_msg)
+                    sys.exit(0)
                 print err
-                #message = 'Failed to wr Wikidata item '
-                #message.append(err)
-                #self.logger(1, Item.getID(), message)
+                message = 'Failure. Error:{e} '.format(e=err)
+                self.logger(1, Item.getID(), msg=message)
                 
                 continue
         
