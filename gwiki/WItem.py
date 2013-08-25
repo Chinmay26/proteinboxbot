@@ -4,6 +4,11 @@ Created on Jul 10, 2013
 @author: chinmay
 '''
 class Item(object):
+    '''
+    Serves as base class to Human/Mouse  Gene/Protein
+    Contains source values for different claims
+    Contains common methods needed by subclasses
+    '''
     Entrez= 'Q1345229'
     Ensembl  = 'Q1344256'
     Uniprot  = 'Q905695'
@@ -52,6 +57,14 @@ class Item(object):
             return obj
         
     def setField(self,field_name,field_value):
+        '''Sets a field in the fieldsdict using the fields as a validity check.
+
+        The field value must be a unicode object (some coercion will be tried, 
+        but may fail).
+
+        Obviously can be bypassed by changing fieldsdict directly, but this is
+        not encouraged since it'll be ignored if it's incorrect.
+        '''
         
         fieldsdict = self.fieldsdict
         field_value = self.coerce_unicode(field_value)
@@ -73,6 +86,15 @@ class Item(object):
         return fieldsdict
     
     def updateWith(self, targetbox):
+        '''
+        Takes the fields from the target ProteinBox and this ProteinBox and selectively builds a new
+        ProteinBox from the merger of the two. It decides which field to use to build the new object
+        using the following rule:
+        If the target's field value is missing or equal to this one's, this one's value is used. Otherwise,
+        the target's value is used. (Easy enough).
+        Returns the new ProteinBox with the new fields and a summary message describing the fields updated.
+        Also returns a updatedFields dict, which stores data as such: {field_changed:(old, new), ...}
+        '''
         
         src = self.fieldsdict
         try:
@@ -81,18 +103,18 @@ class Item(object):
             raise TypeError("Cannot update")
         if isinstance(targetbox,HumanGene):
             new = HumanGene()
-        if isinstance(targetbox,HumanProtein):
+        elif isinstance(targetbox,HumanProtein):
             new = HumanProtein()
-        if isinstance(targetbox,MouseGene):
+        elif isinstance(targetbox,MouseGene):
             new = MouseGene()
-        if isinstance(targetbox,MouseProtein):
+        else:
             new = MouseProtein()
         updatedFields = {}
         for field in self.fields:
             srcval = src[field]
             tgtval = tgt[field]                
 
-            if tgtval and srcval != tgtval:
+            if tgtval and set(srcval) != set(tgtval) :
                 updatedFields[field] = (srcval, tgtval)
                 new.setField(field, tgtval)
             else:
@@ -112,6 +134,9 @@ class Item(object):
     
 #encodes, ortholog , Gene Atlas
 class HumanGene(Item):
+    '''
+    The complete set of claims , property ids to construct a HumanGene wikidata item
+    '''
         
     fields = [
               "Name",
@@ -179,6 +204,9 @@ class HumanGene(Item):
     
 #encoded by 
 class HumanProtein(Item): 
+    '''
+    The complete set of claims,property id's  to construct a HumanProtein Wikidata item
+    '''
             
     fields = [
               "Name",
@@ -234,6 +262,9 @@ class HumanProtein(Item):
                 
                 
 class MouseProtein(Item): 
+    '''
+    The complete set of fields to construct a MouseProtein Wikidata item
+    '''
             
     fields = [
               "Name",
@@ -288,7 +319,9 @@ class MouseProtein(Item):
                 
                 
 class MouseGene(Item):
-        
+    '''
+    The complete set of fields to construct a MouseGene Wikidata item
+    '''    
     fields = [
               "Name",
               "MGI ID",     #mouse genome informatics ID

@@ -7,6 +7,8 @@ import urllib2,json
 
 
 def getResult():
+    '''Obtain the entire set of wikidata gene articles from genewikiplus
+    '''
     url = "http://api.genewikiplus.org/map/"
      
     try:
@@ -28,6 +30,11 @@ def getResult():
         raise e
   
 def getTitle(entrez):
+    '''
+    Get the title of wikipedia article from genewikiplus
+    Arguments:
+    entrez - entrez gene id
+    '''
     url = "http://api.genewikiplus.org/map/"
     url = url + str(entrez)
     
@@ -41,12 +48,4 @@ def getTitle(entrez):
     except IOError as e:
         print("Network error")
         raise e
-    
-        
-#if __name__=='__main__':
-#    query_res = getResult()
-    
-#    for k,s in query_res:
-#        print k,s
-#   print getTitle(5649)
     

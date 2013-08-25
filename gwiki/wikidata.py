@@ -15,16 +15,12 @@ except ImportError:
     raise
 
 def construct_from_item(Item,Entity ):
+    '''Construct WItem(HumanProtein , HumanGene ,MouseProtein , MouseGene) by reading and parsing the wikidata item
+    Arguments:
+    -Item : wikidata ID
+    -Entity : Type of Entity(can be one of HumanProtein , HumanGene ,MouseProtein , MouseGene) 
+    '''
     Item_dict=Item.get()
-    
-   # for property in HGene.HGene_properties:
-        #print HGene.HGene_properties[property]
-   #     if Item.claims[HGene.HGene_properties[property]].exists():
-   #         if property in HGene.multivalue:
-   #             print property
-   #         else:
-   #             pvalue = Item.claims[HGene.HGene_properties[property]]
-   #             print pvalue
     
     #labels definitely exist
     try :
@@ -50,9 +46,9 @@ def construct_from_item(Item,Entity ):
                         #print match.group(1)
                                 existing_val = str(match.group(1))
                     
-                            multival.append(existing_val)
+                        multival.append(existing_val)
                 
-                        pval = multival
+                    pval = multival
             
                 else:
                     pval = Item_dict['claims'][claim][0].getTarget()
@@ -72,8 +68,14 @@ def construct_from_item(Item,Entity ):
         emsg='Failed to construct Entity:{ET} from wikidata item:{ITEM}'.format(ET=Entity,ITEM=Item)
         raise WikidataConstructItem(emsg)
 
-#search for the item with given title
+
 def search_Item(title):
+    '''
+    Search for wikidata item with key = wikidata item label
+    Directly calls the mediawiki API
+    Arguments:
+    -title : Wikidata item label
+    '''
     
     
     mysite = pywikibot.Site("wikidata","wikidata")
@@ -92,8 +94,13 @@ def search_Item(title):
     if data['success']:
         return data['search'] 
 
-#create an item with an label
+
 def create_Item(title):
+    '''
+    Create a wikidata item
+    Arguments:
+    -title : wikidata item label. The newly created item is initialised with this title
+    '''
     
     mysite = pywikibot.Site("wikidata","wikidata")
     repo = mysite.data_repository()
@@ -107,6 +114,13 @@ def create_Item(title):
     return ID
 
 def search_claim(Items,property,value):
+    '''
+    Search whether the item contains the claim with key=value
+    Arguments:
+    Items : set of items to search for
+    property : property id
+    value : key property value to be matched against
+    '''
     mysite = pywikibot.Site("wikidata","wikidata")
     repo = mysite.data_repository()
     Identifier = []
@@ -125,6 +139,13 @@ def search_claim(Items,property,value):
     
     
 def addClaim(ID,property,value,pfield):
+    ''' Add claim to the wikidata item
+    Arguments:
+    -ID : wikidata ID
+    -Property : Property ID
+    -value    : Property value
+    -pfield   : property name
+    '''
     mysite = pywikibot.Site("wikidata","wikidata")
     repo = mysite.data_repository()
     item = pywikibot.ItemPage(repo,ID)
@@ -142,6 +163,11 @@ def addClaim(ID,property,value,pfield):
     claim.addSource(source)
     
 def search_HumanProtein(title):
+    '''Search for Human Protein
+    
+    Arguments:
+    -title : Wikidata label
+     '''
     
     site = pywikibot.getSite('en')
     page = pywikibot.Page(site,title)
@@ -154,6 +180,15 @@ def search_HumanProtein(title):
 
     
 def setSource(property,pfield,pvalue):
+    '''ADD source to wikidata claim
+    
+     Arguments:
+     -Property : property id 
+     -pfield   : property name
+     -pvalue   : property value
+    
+    '''
+    
     mysite = pywikibot.Site("wikidata","wikidata")
     repo = mysite.data_repository()
     
@@ -168,6 +203,14 @@ def setSource(property,pfield,pvalue):
     
     
 def setHumanProtein(Name,label,uniprot):
+    '''Properly setup the HumanProtein Item with appropriate label and uniprot claim
+    
+      Arguments:
+      -Name    : HGNC Name
+      -label   : Search for HP item with this existing label
+      -uniprot : Add Claim==uniprotID for the item
+      
+      ''' 
         
     res1 = search_HumanProtein(label)
     mysite = pywikibot.Site("wikidata","wikidata")
@@ -201,27 +244,3 @@ class WikidataSearchError(Exception):
     '''Thrown when we cannot find the wikidata item''' 
     
     
-
-#def search_Item(title):
-
-#    mysite = pywikibot.Site("wikidata","wikidata")
-#    url = "http://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&search=%s&language=en&type=item&limit=4",%(title)
-#    req = urllib2.Request(url)
-#    u = urllib2.urlopen(req)
-
-            
-        
-#if __name__ == '__main__':
-#    ID = search_Item('jhfuf6fuwqw')
-#    print ID
-
-    
-  
-  
-#if __name__ == '__main__' :
-    
-#    site = pywikibot.Site('en','wikipedia')
-    
-#    repo = site.data_repository()
-#    item = pywikibot.ItemPage(repo,'Q414043')
-#    construct_from_item(item, HumanGene.HumanGene())
