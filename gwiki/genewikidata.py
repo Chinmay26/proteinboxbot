@@ -7,9 +7,6 @@ import pywikibot
 import re
 from pywikibot.data import api
 
-#repo = pywikibot.Site('wikidata' , 'wikidata').data_repository()
-
-
 try:
     import settings
 except ImportError as e:
@@ -26,6 +23,7 @@ class GeneWikidata(object):
     data_repo = None
     category = None
     def __init__(self):
+        '''login to wikidata '''
         self.base_site = pywikibot.Site(code = self.code_site, fam = self.family, user = None, sysop = None, interface =None)
         #fam = family
         #sysop = system operator 
@@ -35,6 +33,9 @@ class GeneWikidata(object):
         self.data_repo = self.base_site.data_repository()
         
     def get_item(self,Wikidata_ID):
+        '''
+        Get the item(claims,description,aliases,sitelinks) from wikidata identifier
+        '''
         item = pywikibot.ItemPage(self.data_repo , Wikidata_ID)
         item.get()
         return item
@@ -42,7 +43,7 @@ class GeneWikidata(object):
     def articles(self):
         self.category = pywikibot.Category(pywikibot.Link(settings.CATEGORY_NAME,defaultNamespace=14)) 
         #NOTICE  total = None  when running for the entire set of PBB templates
-        articles = self.category.articles(recurse = False, step = None, total = 3, content = True, namespaces = None)
+        articles = self.category.articles(recurse = False, step = None, total = 20, content = True, namespaces = None)
         #content = True retreive the contents of gene wikiarticles
         #recurse = False Dont go into subcategories
         #total  retreive the many number of pages 
@@ -60,47 +61,14 @@ class GeneWikidata(object):
             match = re.search(r'\{\{\s?PBB\s?\|\s?geneid=\s?([\d]*)\s?\}\}', article.text)
             if match :
                 yield (article.title(),match.group(1)) 
-                
-        
-                
-    #def infoboxes(self):
-        
-     #   self.category = pywikibot.Category(pywikibot.Link("Template:GNF_Protein_box",defaultNamespace=14))
+
         
     def get_identifier(self,title):
-        #create temporary wikipedia site object to get WIKIDATA ITEM identifier from linked wikipedia page
+        ''' temporary wikipedia site object to get WIKIDATA ITEM identifier from linked wikipedia page '''
         site = pywikibot.Site('en', 'wikipedia')
         page = pywikibot.Page(site,title)
         item = pywikibot.ItemPage.fromPage(page)
         if item.exists():
             return item.getID()
         
-                
-    #TO-DO Create a wikidata item
-            
-    
-    
-        
-   # def write(self,name,symbol):
-    #    page = pywikibot.Page(site,'name')
-     #   if not page.exists():
-      #      page = pywikibot.Page(site,'symbol')
-       #     wikipedia_item = pywikibot.ItemPage.fromPage(page)
-#Obtain the item from wikidata
-        #    item = pywikibot.ItemPage(repo,wikipedia_item.getID())#currently can access wikidata items through ID's only
-         #   item.get()
-
-#print item.claims
-#claim = pywikibot.Claim(repo,'p352')
-#claim.setTarget("5649")    
-#item.addClaim(claim,bot=True)
-
-#checks whether the item has claims
-#for key in properties:
- #   property_id = properties[key]
-  #  if item.claims.has_key(property_id):
-   #     print property_id
-#item.claims.has_key(k)
-#dicts = item.claims.viewkeys() #gives property id's present in the item
-#print type(dicts)
 

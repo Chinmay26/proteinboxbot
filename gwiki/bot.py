@@ -7,7 +7,6 @@ import pywikibot,sys,re
 import mygeneinfo,argparse
 import genewikidata
 import wikidata,WItem,Wikititle
-import pickle
 
 try:
     import settings
@@ -16,8 +15,10 @@ except ImportError as e:
     raise e
 
 class bot(object):
-    #CHECK path to log file. previous bot log file was ---> "http://api.genewikiplus.org/log/submit"
-    #log_file_path = "/home/chinmay/GSOC-rough/log1.txt"
+    '''
+    Bot  to handle updation/creation of wikidata items
+    '''
+
     log=[]
     genewikidata = None
     def __init__(self,genewikidata):
@@ -34,7 +35,12 @@ class bot(object):
             raise TypeError("Setup pywikipedia-rewrite.")
         
     def logger(self,exit_status,Item,msg):
-        ''' to-do '''
+        ''' Log entries to log file with path specified below 
+        Arguments:
+        -exit_status : 0 -success , 1 -failure
+        -Item  : Updated wikidata item
+        -msg   : message contains error cause or updated claim values
+        '''
         
         log_entry = {
                     "status"  : exit_status,
@@ -49,7 +55,12 @@ class bot(object):
 
         
     def write(self,Item,Entity,updatedClaims):  
-        ''' write to wikidata'''
+        '''     write to wikidata
+        Arguments:
+        -Item : Wikidata item to write to
+        -Entity : Canbe HumanGene,HumanProtein,MouseGene,MouseProtein
+        -updatedClaims : Claims to be written to this wikidata item
+        '''
         Claims = Item.get().get('claims')
         
         Repo = self.genewikidata.data_repo
@@ -79,7 +90,8 @@ class bot(object):
                             existing_val = Item.claims[unicode(property)][k].getTarget()
                             if isinstance(existing_val,pywikibot.ItemPage):
                                 existing_val = existing_val.getID()
-                            curval.append(existing_val.title())
+                                existing_val = existing_val.title()
+                            curval.append(existing_val)
                
 
                         
@@ -138,7 +150,8 @@ class bot(object):
                             source_for_claim.setTarget(source_Item)
                         #add the claim
                         Item.addClaim(claim,bot=True)
-                        claim.addSource(source_for_claim)
+                        if pfield in WItem.Item.property_list_sources:
+                            claim.addSource(source_for_claim)
                         print pfield, property,val,Item
                         
                  
@@ -151,32 +164,15 @@ class bot(object):
             message = "No modification done"
             
         return message
-        #genloc start,end,chr  ---> genloc assembly
-        # ortholog --> species
-                    
-                
-                
-                
-            
-        
-        
-        #src = HGene.fieldsdict
-        #for property_key in HGene.HGene_properties:
-            #claim = pywikibot.Claim(Item,HGene.HGene_properties[property_key])
-            #print claim
-            #get present value :  claim.getTarget()
-             
-            #value = HGene.fields[property_key]
-            #print type(value),value
-            
-            #claim.setTarget("5649")
-            #Item.addClaim(claim,bot=True) 
-            
-
+      
         
         
     def run_HumanProtein(self,HumanProtein,Item):
-        ''' Run the bot for human protein items '''
+        ''' Run the bot for human protein items
+        Arguments:
+        -HumanProtein : HumanProtein object constructed from mygeneinfo.api
+        -Item         : HumanProtein Wikidata Item
+         '''
 
         try:
             CurProtein = wikidata.construct_from_item(Item,WItem.HumanProtein())
@@ -194,6 +190,11 @@ class bot(object):
         self.logger(0, Item.getID(), msg = message )
             
     def run_HumanGene(self,HumanGene):
+        '''  Run the bot for the Human Gene item
+        Arguments:
+        HumanGene : HumanGene object constructed from mygeneinfo.api
+        
+        '''
         
         key  = HumanGene.fieldsdict['Entrez Gene ID']
         title = HumanGene.fieldsdict['Name']
@@ -206,7 +207,7 @@ class bot(object):
                 raise wikidata.WikidataSearchError(message)
             Item = self.genewikidata.get_item(ID)
         else:
-            message = 'Failed to search already created HumanGene Wikidata item with EntrezID={val}'.format(val=key)
+            message = 'Failed to search by label already created HumanGene Wikidata item with EntrezID={val}'.format(val=key)
             raise wikidata.WikidataSearchError(message)
         try:
             CurHGene = wikidata.construct_from_item(Item, WItem.HumanGene())
@@ -223,7 +224,10 @@ class bot(object):
         self.logger(0, Item.getID(), msg = message ) 
             
     def run_MouseGene(self,MouseGene):
-        
+        ''' Run the bot for Mouse Gene item
+        Arguments:
+        MouseGene : MouseGene item constructed from mygeneinfo.api
+        ''' 
         key  = MouseGene.fieldsdict['Entrez Gene ID']
         title = MouseGene.fieldsdict['Name']
         res = wikidata.search_Item(title)
@@ -253,6 +257,10 @@ class bot(object):
         self.logger(0, Item.getID(), msg = message )  
             
     def run_MouseProtein(self,MouseProtein):
+        ''' Run the bot for Mouse Protein item
+        Arguments:
+        MouseGene : MouseProtein item constructed from mygeneinfo.api
+        ''' 
         
         key  = MouseProtein.fieldsdict['Uniprot ID']
         title = MouseProtein.fieldsdict['Name']
@@ -286,25 +294,34 @@ class bot(object):
             
             
     def run(self,Entrezlist=None):
+        '''launch the bot
+        Arguments:
+        Entrezlist : dict containing a list of entrez ids. The bot will run only these entrez gene ids 
+        '''
         
         if not Entrezlist:
             source = Wikititle.getResult()
         else:
-            source = Entrezlist
-      
+            tuple_list=[]
+            for eid in Entrezlist:
+                tuple1=()
+                title=Wikititle.getTitle(entrez=eid)
+                tuple1=(eid,unicode(title))
+                tuple_list.append(tuple1)
+            source = tuple_list
         for entrez,title in source:
             
-            #construct items from mygeneinfo
-            HumanGene,HumanProtein,MouseGene,MouseProtein = mygeneinfo.Parse(str(entrez),title)
+            try:
+            
+                #construct items from mygeneinfo
+                HumanGene,HumanProtein,MouseGene,MouseProtein = mygeneinfo.Parse(str(entrez),title)
             
            
             #title = HumanProtein.fieldsdict['Name']
-            Wikidata_ID = self.genewikidata.get_identifier(title)
+                Wikidata_ID = self.genewikidata.get_identifier(title)
             #print Wikidata_ID
-            if Wikidata_ID:
-                Item = self.genewikidata.get_item(Wikidata_ID)
-                
-            try:
+                if Wikidata_ID:
+                    Item = self.genewikidata.get_item(Wikidata_ID)
                  
          
                 self.run_HumanProtein(HumanProtein,Item)
