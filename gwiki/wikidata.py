@@ -15,7 +15,7 @@ except ImportError:
     raise
 
 def construct_from_item(Item,Entity ):
-    Item.get()
+    Item_dict=Item.get()
     
    # for property in HGene.HGene_properties:
         #print HGene.HGene_properties[property]
@@ -27,45 +27,50 @@ def construct_from_item(Item,Entity ):
    #             print pvalue
     
     #labels definitely exist
-    label = Item.labels['en']
-    Entity.setField('Name',label)
+    try :
+        label = Item_dict['labels']['en']
+        Entity.setField('Name',label)
     #descriptions may not exist
-    if 'descriptions' in Item.get():
-        if 'en' in Item.descriptions:
-            des = Item.descriptions['en']
-            Entity.setField('description',des)
+        if 'descriptions' in Item_dict:
+            if 'en' in Item.descriptions:
+                des = Item.descriptions['en']
+                Entity.setField('description',des)
                 
-    for claim in Item.claims:
-        if claim in Entity.properties:
-            if len(Item.claims[claim]) > 1 :
+        for claim in Item_dict['claims']:
+            if claim in Entity.properties:
+                if len(Item_dict['claims'][claim]) > 1 :
                 #TO-DO  work on  qualifiers
-                multival = []
-                total = len(Item.claims[claim])
-                for k in range(0,total):
-                    existing_val = Item.claims[claim][k].getTarget()
-                    if isinstance(existing_val,pywikibot.page.ItemPage):
-                        match = re.search(r'\[\[wikidata\:([\w]*)\]\]',str(existing_val))
+                    multival = []
+                    total = len(Item_dict['claims'][claim])
+                    for k in range(0,total):
+                        existing_val = Item_dict['claims'][claim][k].getTarget()
+                        if isinstance(existing_val,pywikibot.page.ItemPage):
+                            match = re.search(r'\[\[wikidata\:([\w]*)\]\]',str(existing_val))
+                            if match:
+                        #print match.group(1)
+                                existing_val = str(match.group(1))
+                    
+                            multival.append(existing_val)
+                
+                        pval = multival
+            
+                else:
+                    pval = Item_dict['claims'][claim][0].getTarget()
+                #print pval , claim , type(pval)
+                    if isinstance(pval,pywikibot.page.ItemPage):
+                        match = re.search(r'\[\[wikidata\:([\w]*)\]\]',str(pval))
                         if match:
                         #print match.group(1)
-                            existing_val = str(match.group(1))
+                            pval = str(match.group(1))
                     
-                    multival.append(existing_val)
+                field_name = Entity.properties[claim]
+                Entity.setField(field_name,pval)
                 
-                pval = multival
-            
-            else:
-                pval = Item.claims[claim][0].getTarget()
-                #print pval , claim , type(pval)
-                if isinstance(pval,pywikibot.page.ItemPage):
-                    match = re.search(r'\[\[wikidata\:([\w]*)\]\]',str(pval))
-                    if match:
-                        #print match.group(1)
-                        pval = str(match.group(1))
-                    
-            field_name = Entity.properties[claim]
-            Entity.setField(field_name,pval)
-                
-    return Entity
+        return Entity
+    
+    except:
+        emsg='Failed to construct Entity:{ET} from wikidata item:{ITEM}'.format(ET=Entity,ITEM=Item)
+        raise WikidataConstructItem(emsg)
 
 #search for the item with given title
 def search_Item(title):
@@ -168,10 +173,11 @@ def setHumanProtein(Name,label,uniprot):
     mysite = pywikibot.Site("wikidata","wikidata")
     repo = mysite.data_repository()
     item = pywikibot.ItemPage(repo,res1)
-    item.get()
+    Item_dict = item.get()
     labels = {"en":unicode(Name)
               }
-    item.editLabels(labels)
+    if Item_dict['labels']['en'] != Name:
+        item.editLabels(labels)
     if 'p352' in item.claims:
         return
     else:
@@ -185,8 +191,14 @@ def setHumanProtein(Name,label,uniprot):
         item.addClaim(UPclaim, bot = True)
         UPclaim.addSource(source)
         
+        
+        
+class WikidataConstructItem(Exception):
+    '''Thrown when we cannot construct Proteinboxbot by reading values from wikidata item'''
+        
     
-    
+class WikidataSearchError(Exception):
+    '''Thrown when we cannot find the wikidata item''' 
     
     
 
