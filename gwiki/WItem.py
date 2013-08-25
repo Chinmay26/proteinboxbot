@@ -20,23 +20,20 @@ class Item(object):
               "GenLoc_start"            : Ensembl ,   
               "GenLoc_end"              : Ensembl ,
               "RefSeq"                  : Entrez  ,
-             # "AltSymbols"
+              "AltSymbols"              : Entrez  ,
               "species"                 : Entrez  ,
               "RefSeq RNA ID"           : Entrez  ,
               "EC classification"       : Entrez  ,              
               "PDB"                     : Uniprot ,
               "Uniprot ID"              : Uniprot ,
               "molecular function"      : Entrez  ,
-             # "encoded by"              
+              "encoded by"              : Entrez  ,
               "cell component"          : Entrez  ,
               "biological process"      : Entrez  ,
               "RefSeq Protein ID"       : Entrez  ,
               "Ensembl Protein ID"      : Ensembl ,
-              "Gene Ontology ID"        : Entrez
-             # "found in taxon",
-             # "subclass of"
-             # "encodes"
-             # "encoded by "
+              "Gene Ontology ID"        : Entrez  
+
                              
                              }
         
@@ -251,7 +248,8 @@ class MouseProtein(Item):
               "encoded by",
               "found in taxon",
               "Ensembl Protein ID",
-              "subclass of"
+              "subclass of",
+              "EC classification"
               
              ]
     
@@ -260,8 +258,7 @@ class MouseProtein(Item):
                   "cell component",
                   "biological process",
                   "RefSeq Protein ID",
-                  "Ensembl Protein ID",
-                  "EC classification"
+                  "Ensembl Protein ID"
                    ]
     
     properties = {
