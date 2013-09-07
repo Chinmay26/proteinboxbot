@@ -114,7 +114,7 @@ class Item(object):
             srcval = src[field]
             tgtval = tgt[field]                
 
-            if tgtval and set(srcval) != set(tgtval) :
+            if tgtval and not(set(srcval) == set(tgtval)):
                 updatedFields[field] = (srcval, tgtval)
                 new.setField(field, tgtval)
             else:
@@ -147,6 +147,7 @@ class HumanGene(Item):
               "gene symbol",
               "Entrez Gene ID",
               "OMIM ID",
+	      "aliases",	
              # "GeneAtlas_image1",
              # "GeneAtlas_image2",
              # "GeneAtlas_image3",
@@ -160,12 +161,13 @@ class HumanGene(Item):
               "subclass of",
               "encodes",
               "RefSeq",
-              "AltSymbols",
+     #         "AltSymbols",
               "species",
               "RefSeq RNA ID"
               ]
     
-    multivalue = ["AltSymbols",
+    multivalue = [#"AltSymbols",
+		  "subclass of",
                   "RefSeq",
                   "Ensembl Transcript ID",
                   "RefSeq RNA ID"]
@@ -211,6 +213,7 @@ class HumanProtein(Item):
     fields = [
               "Name",
               "description",
+	      "aliases",
               "EC number",
               "EC classification",              
               "PDB",
@@ -227,6 +230,7 @@ class HumanProtein(Item):
              ]
     
     multivalue = ["PDB",
+		  "subclass of",
                   "molecular function",
                   "cell component",
                   "biological process",
@@ -269,6 +273,7 @@ class MouseProtein(Item):
     fields = [
               "Name",
               "description",
+	      "aliases" ,
               "EC number",              
               "PDB",
               "Uniprot ID",
@@ -285,6 +290,7 @@ class MouseProtein(Item):
              ]
     
     multivalue = ["PDB",
+		  "subclass of",
                   "molecular function",
                   "cell component",
                   "biological process",
@@ -327,6 +333,7 @@ class MouseGene(Item):
               "MGI ID",     #mouse genome informatics ID
               "Homologene ID",
               "description",              
+	      "aliases" ,	
               "gene symbol",
               "Entrez Gene ID",
               "Ensembl Gene ID",
@@ -340,11 +347,12 @@ class MouseGene(Item):
               "species",
               "ortholog",
               "encodes",
-              "AltSymbols",
+             # "AltSymbols",
               "RefSeq RNA ID"
               ]
     
-    multivalue = ["AltSymbols",
+    multivalue = [#"AltSymbols",
+		  "subclass of",
                   "RefSeq",
                   "Ensembl Transcript ID",
                   "RefSeq RNA ID"]
