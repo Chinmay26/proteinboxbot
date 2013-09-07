@@ -3,7 +3,7 @@ Created on Jul 3, 2013
 
 @author: chinmay
 '''
-import WItem
+import WItem,ipdb
 import pywikibot
 import genewikidata
 from pywikibot.data import api
@@ -31,7 +31,12 @@ def construct_from_item(Item,Entity ):
             if 'en' in Item.descriptions:
                 des = Item.descriptions['en']
                 Entity.setField('description',des)
-                
+
+        if 'aliases' in Item_dict:
+	    if 'en' in Item_dict['aliases']:
+		alias=Item_dict['aliases']['en']       
+		Entity.setField('aliases',alias)
+ 
         for claim in Item_dict['claims']:
             if claim in Entity.properties:
                 if len(Item_dict['claims'][claim]) > 1 :
@@ -83,11 +88,13 @@ def search_Item(title):
     params = { 'action' :'wbsearchentities' ,
                 'format' : 'json' ,              
               'language' : 'en',
-               'limit' : '4',      #retreive four items
+               'limit' : '5',      #retreive five items
                 'type' : 'item',
                 'search': '',
               }
-    
+    #for reelin we have four additional wikidata items for testing purposes
+
+         
     params['search']= title
     request = api.Request(site=mysite,**params)
     data = request.submit()
@@ -101,7 +108,7 @@ def create_Item(title):
     Arguments:
     -title : wikidata item label. The newly created item is initialised with this title
     '''
-    
+    #ipdb.set_trace()
     mysite = pywikibot.Site("wikidata","wikidata")
     repo = mysite.data_repository()
     labels = []
@@ -139,7 +146,7 @@ def search_claim(Items,property,value):
     
     
 def addClaim(ID,property,value,pfield):
-    ''' Add claim to the wikidata item
+    ''' Add claim to the wikidata item and a label to created item
     Arguments:
     -ID : wikidata ID
     -Property : Property ID
@@ -163,7 +170,7 @@ def addClaim(ID,property,value,pfield):
     claim.addSource(source)
     
 def search_HumanProtein(title):
-    '''Search for Human Protein
+    '''Search for Human Protein by obtaining the default linked wikidata item from wikipedia article
     
     Arguments:
     -title : Wikidata label
@@ -221,6 +228,10 @@ def setHumanProtein(Name,label,uniprot):
               }
     if Item_dict['labels']['en'] != Name:
         item.editLabels(labels)
+
+    up="uniprot:"+str(uniprot)
+    setLabel(item.getID(),up)
+    
     if 'p352' in item.claims:
         return
     else:
@@ -234,6 +245,41 @@ def setHumanProtein(Name,label,uniprot):
         item.addClaim(UPclaim, bot = True)
         UPclaim.addSource(source)
         
+def setLabel(ItemID,value):
+    mysite = pywikibot.Site("wikidata","wikidata")
+    repo = mysite.data_repository()
+    item = pywikibot.ItemPage(repo,ItemID)
+    Item_dict = item.get()
+
+    alias_dict=[]
+    if 'aliases' in Item_dict:
+        if 'en' in Item_dict['aliases']:
+            alias_dict=Item_dict['aliases']['en']
+
+    if unicode(value) not in alias_dict:
+        alias_dict.append(unicode(value))
+        al={"en":alias_dict}
+        item.editAliases(al)
+
+def set_GO_Terms(ItemID,GO_value):
+    '''
+    check if already created GO terms have GO ID claims or not. If not add GO claim
+    '''
+    mysite = pywikibot.Site("wikidata","wikidata")
+    repo = mysite.data_repository()
+    item = pywikibot.ItemPage(repo,ItemID)
+    Item_dict = item.get()
+    
+    GO_ID='p686'
+    if GO_ID not in Item_dict['claims']:
+        addClaim(ItemID, GO_ID, GO_value, 'Gene Ontology ID')
+    else:
+        #verify the go id
+        claim=Item_dict['claims'][GO_ID][0]
+        if claim.getTarget() != GO_value:
+            claims=[claim]
+            item.removeClaims(claims)
+            addClaim(ItemID, GO_ID, GO_value, 'Gene Ontology ID')
         
         
 class WikidataConstructItem(Exception):
