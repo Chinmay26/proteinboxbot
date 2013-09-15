@@ -163,7 +163,7 @@ def addClaim(ID,property,value,pfield):
     
     sourceField = WItem.Item.property_list_sources[pfield]
     sourceItem = pywikibot.ItemPage(repo,sourceField)
-    source = pywikibot.Claim(repo,unicode('p143'))#imported from
+    source = pywikibot.Claim(repo,unicode('P143'))#imported from
     source.setTarget(sourceItem)
     
     item.addClaim(claim, bot = True)
@@ -201,7 +201,7 @@ def setSource(property,pfield,pvalue):
     
     sourceField = WItem.Item.property_list_sources[pfield]
     sourceItem = pywikibot.ItemPage(repo,sourceField)
-    source = pywikibot.Claim(repo,unicode('p143'))#imported from
+    source = pywikibot.Claim(repo,unicode('P143'))#imported from
     source.setTarget(sourceItem)
     
     claim1 = pywikibot.Claim(repo,unicode(property))
@@ -232,13 +232,13 @@ def setHumanProtein(Name,label,uniprot):
     up="uniprot:"+str(uniprot)
     setLabel(item.getID(),up)
     
-    if 'p352' in item.claims:
+    if 'P352' in item.claims:
         return
     else:
-        UPclaim = pywikibot.Claim(repo,unicode('p352'))
+        UPclaim = pywikibot.Claim(repo,unicode('P352'))
         UPclaim.setTarget(uniprot)
         
-        source = pywikibot.Claim(repo,unicode('p143'))
+        source = pywikibot.Claim(repo,unicode('P143'))
         sourceItem = pywikibot.ItemPage(repo,'Q905695')
         source.setTarget(sourceItem)
         
@@ -270,7 +270,7 @@ def set_GO_Terms(ItemID,GO_value):
     item = pywikibot.ItemPage(repo,ItemID)
     Item_dict = item.get()
     
-    GO_ID='p686'
+    GO_ID='P686'
     if GO_ID not in Item_dict['claims']:
         addClaim(ItemID, GO_ID, GO_value, 'Gene Ontology ID')
     else:
@@ -281,6 +281,15 @@ def set_GO_Terms(ItemID,GO_value):
             item.removeClaims(claims)
             addClaim(ItemID, GO_ID, GO_value, 'Gene Ontology ID')
         
+def addSiteLinks(ItemID,title):
+    mysite = pywikibot.Site("wikidata","wikidata")
+    repo = mysite.data_repository()
+    item = pywikibot.ItemPage(repo,ItemID)
+    Item_dict = item.get()    
+    SL={"site" : "enwiki",
+    "title" : title
+    }
+    item.setSitelink(SL) 
         
 class WikidataConstructItem(Exception):
     '''Thrown when we cannot construct Proteinboxbot by reading values from wikidata item'''
