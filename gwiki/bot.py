@@ -1,8 +1,5 @@
-'''
-Created on Jun 20, 2013
-
-@author: chinmay
-'''
+#!usr/bin/env python
+# -*- coding: utf-8 -*-
 import pywikibot,sys,re,ipdb
 import mygeneinfo,argparse,datetime
 import genewikidata
@@ -89,7 +86,7 @@ class bot(object):
 	    	modifiedClaims.append('aliases')
 		
         #Specify the source using property "imported from"
-        imported_from = "p143"
+        imported_from = "P143"
         source_for_claim = pywikibot.Claim(Repo,unicode(imported_from))
         
         
@@ -121,7 +118,7 @@ class bot(object):
                             pass
                         else:
                             val = unicode(val)
-                            if (val.startswith('Q') or val.startswith('q')) and property != 'p352':
+                            if (val.startswith('Q') or val.startswith('q')) and property != 'P352':
                                 valitem = pywikibot.ItemPage(Repo,val)
                                 if not valitem.exists():
                                     print 'Item not exists'
@@ -147,7 +144,7 @@ class bot(object):
                         #Check the val type
                         #If item page  ex: val = Q20
                         
-                    if (val.startswith('Q') or val.startswith('q')) and property != 'p352':
+                    if (val.startswith('Q') or val.startswith('q')) and property != 'P352':
                         valitem = pywikibot.ItemPage(Repo,val)
                         if not valitem.exists():
                             print 'Item not exists'
@@ -222,7 +219,7 @@ class bot(object):
         key  = HumanGene.fieldsdict['Entrez Gene ID']
         title = HumanGene.fieldsdict['Name']
         res = wikidata.search_Item(title)
-	entrez='p351'
+	entrez='P351'
         if res:
             ID = wikidata.search_claim(res,entrez,key)
 	    if not ID:
@@ -257,7 +254,7 @@ class bot(object):
         key  = MouseGene.fieldsdict['Entrez Gene ID']
         title = MouseGene.fieldsdict['Name']
         res = wikidata.search_Item(title)
-	entrez='p351'
+	entrez='P351'
         if res:
             ID = wikidata.search_claim(res,entrez,key)
             if not ID:
@@ -294,7 +291,7 @@ class bot(object):
         key  = MouseProtein.fieldsdict['Uniprot ID']
         title = MouseProtein.fieldsdict['Name']
         res = wikidata.search_Item(title)
-	uniprot='p352'
+	uniprot='P352'
         if res:
             ID = wikidata.search_claim(res,uniprot,key)
             if not ID:
@@ -360,25 +357,33 @@ class bot(object):
             for eid in Entrezlist:
                 tuple1=()
                 title=Wikititle.getTitle(entrez=eid)
-                tuple1=(eid,unicode(title))
+                tuple1=(eid,str(title))
                 tuple_list.append(tuple1)
             source = tuple_list
         for entrez,title in source:
 	    run+=1	
-            if run>25:
-		break	
-
+            if run<360:
+		continue
+	    if run>400:	
+		break
 	
             try: 
-            
-           
+		uni_title=title
+           	if not isinstance(title,unicode):
+		    uni_title=unicode(title,'utf-8')
+		    
             #title = HumanProtein.fieldsdict['Name']
-                Wikidata_ID = self.genewikidata.get_identifier(title)
+                Wikidata_ID = self.genewikidata.get_identifier(uni_title)
             #print Wikidata_ID
                 if Wikidata_ID:
                     Item = self.genewikidata.get_item(Wikidata_ID)
 		#ipdb.set_trace()
-                HumanGene,HumanProtein,MouseGene,MouseProtein = mygeneinfo.Parse(str(entrez),title)
+	        else:
+                    #create item and add link it to wikipedia article
+                    Wikidata_ID=wikidata.create_Item(title)
+                    wikidata.addSiteLinks(Wikidata_ID, title)
+               
+	        HumanGene,HumanProtein,MouseGene,MouseProtein = mygeneinfo.Parse(str(entrez),uni_title)
                 #ipdb.set_trace() 
          
                 self.run_HumanProtein(HumanProtein,Wikidata_ID)
@@ -394,11 +399,11 @@ class bot(object):
             except Exception as err:
 		fail_runs+=1
 		elog.append(err)
-		ipdb.set_trace()
+		#ipdb.set_trace()
                 if isinstance(err,wikidata.WikidataSearchError):
-                    err_msg = 'Terminating bot operation. Cause:{e}'.format(e=err)
+                    err_msg = 'Cause:{e}'.format(e=err)
                     self.logger(1,'invalid',msg=err_msg)
-                    sys.exit(0)
+                    #sys.exit(0)
                 print err
                 message = 'Failure. Error:{e} '.format(e=err)
                 self.logger(1, Item.getID(), msg=message)

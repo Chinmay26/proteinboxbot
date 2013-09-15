@@ -1,3 +1,5 @@
+#!usr/bin/env python
+# -*- coding: utf-8 -*-
 
  
 import json,urllib2,re,urllib
@@ -145,7 +147,8 @@ def uniprotAccForEntrezId(entrez):
 
     data = urllib.urlencode(params)
     response = urllib2.urlopen(urllib2.Request(url, data))
-    accns = response.read().split('\n')
+    k=response.read()
+    accns = k.split('\n')
     for acc in accns:
         if isReviewed(acc): return acc
     return None
@@ -280,9 +283,9 @@ def parse_HumanGene_json(gene_json,homolog_json):
     ID = []
     res = wikidata.search_Item(key)
     #search for human protein, property = uniprot ID 
-
+    #ipdb.set_trace()
     uniprot = findReviewedUniprotEntry(get(root, 'uniprot'), entrez)
-    uniprotID= 'p352'
+    uniprotID= 'P352'
     if res:
         ID = wikidata.search_claim(res,uniprotID ,uniprot)
     if not ID:
@@ -301,9 +304,9 @@ def parse_HumanGene_json(gene_json,homolog_json):
     ID = []
     res = wikidata.search_Item(key)
     #search for mouse gene, property = entrez ID 
-    entrezID='p351'
+    entrezID='P351'
+    mouse_entrez = get(homolog_json,'entrezgene')
     if res:
-        mouse_entrez = get(homolog_json,'entrezgene')
         ID = wikidata.search_claim(res,entrezID ,mouse_entrez)
     #backup search
     if not ID:
@@ -316,7 +319,7 @@ def parse_HumanGene_json(gene_json,homolog_json):
         mouse_entrez = get(homolog_json,'entrezgene')
 	elabel="entrez:"+str(mouse_entrez)
 	wikidata.setLabel(ID,elabel)
-        wikidata.addClaim(ID, 'p351',str(mouse_entrez),'Entrez Gene ID')
+        wikidata.addClaim(ID, 'P351',str(mouse_entrez),'Entrez Gene ID')
         CreatedItemlogger(Item=ID,Type='Mouse Gene',field='Entrez',value=mouse_entrez,name=str(key))
         print "created mouse gene item -- with entrez", mouse_entrez
     #following convention of having capitalised wikidata identifiers    
@@ -373,7 +376,7 @@ def parse_MouseGene_json(homolog_json,gene_json):
     #search for mouse protein, property = uniprot ID 
     #most surely mouse protein is present, but still....
     uniprot = findReviewedUniprotEntry(get(root, 'uniprot'), entrez)
-    uniprotID='p352'
+    uniprotID='P352'
     if res:
         ID = wikidata.search_claim(res,uniprotID ,uniprot)
     if not ID:
@@ -387,7 +390,7 @@ def parse_MouseGene_json(homolog_json,gene_json):
         wikidata.setLabel(ID,ulabel)
 
         #add uniprot claim to mouse protein item
-        wikidata.addClaim(ID, 'p352',uniprot, 'Uniprot ID')
+        wikidata.addClaim(ID, 'P352',uniprot, 'Uniprot ID')
         CreatedItemlogger(Item=ID,Type='Mouse Protein',field='Uniprot',value='uniprot',name=str(key))
     MGItem.setField("encodes", ID.title())
     
@@ -396,7 +399,7 @@ def parse_MouseGene_json(homolog_json,gene_json):
     ID = []
     res = wikidata.search_Item(key)
     #search for human gene, property = entrez ID 
-    entrezID='p351'
+    entrezID='P351'
     if res:
         ID = wikidata.search_claim(res,entrezID ,get(gene_json,'entrezgene'))
     if not ID:
@@ -430,6 +433,8 @@ def parse_MouseProtein_json(Homolog_json):
     
     entrez = get(root, 'entrezgene')
     uniprot = findReviewedUniprotEntry(get(root, 'uniprot'), entrez)
+    if not uniprot:
+	raise UniProtError('Could not find uniprot ID')
     MPItem.setField("Uniprot ID", uniprot)
     MPItem.setField("aliases",'uniprot:'+str(uniprot))
     
@@ -440,7 +445,7 @@ def parse_MouseProtein_json(Homolog_json):
     
     #GO TERMS
     #Wikidata items for GO terms
-    GO_ID = 'p686'
+    GO_ID = 'P686'
     
     if get(root, 'go'):
         GO_DICT = get(root,'go')
@@ -526,7 +531,7 @@ def parse_MouseProtein_json(Homolog_json):
     key = get(root,'symbol') 
     ID = []
     res = wikidata.search_Item(key)
-    entrezID = 'p351'
+    entrezID = 'P351'
     #search for mouse gene, property = entrez 
     if res:
         ID = wikidata.search_claim(res,entrezID ,entrez)
@@ -553,6 +558,8 @@ def parse_HumanProtein_json(gene_json,label):
     
     entrez = get(root, 'entrezgene')
     uniprot = findReviewedUniprotEntry(get(root, 'uniprot'), entrez)
+    if not uniprot:
+        raise UniProtError('Could not find uniprot ID')
     HPItem.setField("Uniprot ID", uniprot)
     HPItem.setField("aliases",'uniprot:'+str(uniprot))
     #First setup Human protein Item with label = HGNC name  and uniprot ID
@@ -578,7 +585,7 @@ def parse_HumanProtein_json(gene_json,label):
     HPItem.setField("Ensembl Protein ID", get(get(root, 'ensembl'), 'protein'))
     
     #Wikidata items for GO terms
-    GO_ID = 'p686'
+    GO_ID = 'P686'
     if get(root, 'go'):
         GO_DICT = get(root,'go')
         for key in GO_DICT:
@@ -664,7 +671,7 @@ def parse_HumanProtein_json(gene_json,label):
     ID = []
     res = wikidata.search_Item(key)
     #search for human gene, property = entrez 
-    entrezID = 'p351'
+    entrezID = 'P351'
     if res:
         ID = wikidata.search_claim(res,entrezID ,entrez)
     if not ID:
@@ -679,7 +686,7 @@ def parse_HumanProtein_json(gene_json,label):
         wikidata.setLabel(ID,elabel)
 
         #add entrez claim to human gene item
-        wikidata.addClaim(ID, 'p351',str(entrez),'Entrez Gene ID') 
+        wikidata.addClaim(ID, 'P351',str(entrez),'Entrez Gene ID') 
         CreatedItemlogger(Item=ID,Type='Human Gene',field='Entrez Gene ID',value=entrez,name=str(key))    
     HPItem.setField("encoded by", ID.title())
 
@@ -724,9 +731,15 @@ def get_json_documents(entrez,label):
 
 def parse_json(gene_json, meta_json, homolog_json,label):
     '''construct human/mouse gene/protein'''
-    HP = parse_HumanProtein_json(gene_json,label)
+  
+    HP=None
+    HG=None
+
+    if gene_json:
+
+	    HP = parse_HumanProtein_json(gene_json,label)
     
-    HG = parse_HumanGene_json(gene_json,homolog_json)
+	    HG = parse_HumanGene_json(gene_json,homolog_json)
    
     MP=None
     MG=None
@@ -749,7 +762,9 @@ def Parse(entrez,label):
     return parse_json(**get_json_documents(entrez,label))
 
     
-    
+class UniProtError(Exception):
+    '''Thrown when unable to find uniprot ID
+    '''    
   
 if __name__ == '__main__':
    Parse('1589')
