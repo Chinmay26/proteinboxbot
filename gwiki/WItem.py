@@ -12,6 +12,8 @@ class Item(object):
     Entrez= 'Q1345229'
     Ensembl  = 'Q1344256'
     Uniprot  = 'Q905695'
+    HomoloGene = 'Q468215'
+    Gene_Ontology = 'Q135085'
     property_list_sources = {
               "HGNC ID"                 : Entrez  ,
               "Homologene ID"           : Entrez  ,
@@ -19,7 +21,7 @@ class Item(object):
               "Entrez Gene ID"          : Entrez  ,
               "OMIM ID"                 : Entrez  ,
               "Ensembl Gene ID"         : Ensembl ,
-              "ortholog"                : Entrez  ,
+              "ortholog"                : HomoloGene  ,
               "Ensembl Transcript ID"   : Ensembl ,
               "GenLoc_chr"              : Ensembl ,
               "GenLoc_start"            : Ensembl ,   
@@ -37,7 +39,7 @@ class Item(object):
               "biological process"      : Entrez  ,
               "RefSeq Protein ID"       : Entrez  ,
               "Ensembl Protein ID"      : Ensembl ,
-              "Gene Ontology ID"        : Entrez  
+              "Gene Ontology ID"        : Gene_Ontology 
 
                              
                              }
@@ -173,24 +175,24 @@ class HumanGene(Item):
                   "RefSeq RNA ID"]
     
     properties = {
-                         'p354' : 'HGNC ID',
-                         'p593' : 'Homologene ID',
-                         'p353' : 'gene symbol',
-                         'p351' : 'Entrez Gene ID',
+                         'P354' : 'HGNC ID',
+                         'P593' : 'Homologene ID',
+                         'P353' : 'gene symbol',
+                         'P351' : 'Entrez Gene ID',
                         #'p692' : 'GeneAtlas image',  
-                         'p594' : 'Ensembl Gene ID',
-                         'p688' : 'encodes',
-                         'p704' : 'Ensembl Transcript ID',
-                         'p643' : 'GenLoc_chr',
-                         'p89'  : 'species',
-                         'p644' : 'GenLoc_start',
-                         'p645' : 'GenLoc_end',
-                         'p703' : 'found in taxon' ,
-                         'p279' : 'subclass of',
-                         'p639' : 'RefSeq RNA ID',
-                         'p684' : 'ortholog',
-                         'p656' : 'RefSeq',
-                         'p492' : 'OMIM ID'
+                         'P594' : 'Ensembl Gene ID',
+                         'P688' : 'encodes',
+                         'P704' : 'Ensembl Transcript ID',
+                         'P643' : 'GenLoc_chr',
+                         'P89'  : 'species',
+                         'P644' : 'GenLoc_start',
+                         'P645' : 'GenLoc_end',
+                         'P703' : 'found in taxon' ,
+                         'P279' : 'subclass of',
+                         'P639' : 'RefSeq RNA ID',
+                         'P684' : 'ortholog',
+                         'P656' : 'RefSeq',
+                         'P492' : 'OMIM ID'
     
     
                         }
@@ -241,18 +243,18 @@ class HumanProtein(Item):
     
     properties = {
                     
-                         'p660' : 'EC classification',
-                         'p591' : 'EC number',
-                         'p638' : 'PDB',
-                         'p702' : 'encoded by',
-                         'p352' : 'Uniprot ID',
-                         'p637' : 'RefSeq Protein ID',
-                         'p681' : 'cell component',
-                         'p682' : 'biological process',
-                         'p680' : 'molecular function',
-                         'p703' : 'found in taxon' ,
-                         'p279' : 'subclass of',
-                         'p705' : 'Ensembl Protein ID'
+                         'P660' : 'EC classification',
+                         'P591' : 'EC number',
+                         'P638' : 'PDB',
+                         'P702' : 'encoded by',
+                         'P352' : 'Uniprot ID',
+                         'P637' : 'RefSeq Protein ID',
+                         'P681' : 'cell component',
+                         'P682' : 'biological process',
+                         'P680' : 'molecular function',
+                         'P703' : 'found in taxon' ,
+                         'P279' : 'subclass of',
+                         'P705' : 'Ensembl Protein ID'
                          
                         }
     
@@ -300,17 +302,17 @@ class MouseProtein(Item):
     
     properties = {
                   
-                         'p660' : 'EC classification',
-                         'p638' : 'PDB',
-                         'p352' : 'Uniprot ID',
-                         'p637' : 'RefSeq Protein ID',
-                         'p702' : 'encoded by',
-                         'p681' : 'cell component',
-                         'p682' : 'biological process',
-                         'p680' : 'molecular function',
-                         'p703'  : 'found in taxon' ,
-                         'p705' : 'Ensembl Protein ID',
-                         'p279' : 'subclass of'
+                         'P660' : 'EC classification',
+                         'P638' : 'PDB',
+                         'P352' : 'Uniprot ID',
+                         'P637' : 'RefSeq Protein ID',
+                         'P702' : 'encoded by',
+                         'P681' : 'cell component',
+                         'P682' : 'biological process',
+                         'P680' : 'molecular function',
+                         'P703'  : 'found in taxon' ,
+                         'P705' : 'Ensembl Protein ID',
+                         'P279' : 'subclass of'
                          
                          
                         }
@@ -358,22 +360,22 @@ class MouseGene(Item):
                   "RefSeq RNA ID"]
     
     properties = {
-                         'p671' : 'MGI ID',
-                         'p593' : 'Homologene ID',
-                         'p89'  : 'species',
-                         'p353' : 'gene symbol',
-                         'p351' : 'Entrez Gene ID',
-                         'p594' : 'Ensembl Gene ID',
-                         'p704' : 'Ensembl Transcript ID',
-                         'p688' : 'encodes',
-                         'p643' : 'GenLoc_chr',
-                         'p644' : 'GenLoc_start',
-                         'p684' : 'ortholog',
-                         'p645' : 'GenLoc_end',
-                         'p703'  : 'found in taxon' ,
-                         'p279' : 'subclass of',
-                         'p639' : 'RefSeq RNA ID',
-                         'p656' : 'RefSeq'
+                         'P671' : 'MGI ID',
+                         'P593' : 'Homologene ID',
+                         'P89'  : 'species',
+                         'P353' : 'gene symbol',
+                         'P351' : 'Entrez Gene ID',
+                         'P594' : 'Ensembl Gene ID',
+                         'P704' : 'Ensembl Transcript ID',
+                         'P688' : 'encodes',
+                         'P643' : 'GenLoc_chr',
+                         'P644' : 'GenLoc_start',
+                         'P684' : 'ortholog',
+                         'P645' : 'GenLoc_end',
+                         'P703'  : 'found in taxon' ,
+                         'P279' : 'subclass of',
+                         'P639' : 'RefSeq RNA ID',
+                         'P656' : 'RefSeq'
                         }
     
     def __init__(self):
