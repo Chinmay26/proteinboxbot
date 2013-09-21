@@ -52,11 +52,14 @@ framework are [here](https://www.mediawiki.org/wiki/Manual:Pywikipediabot/Instal
 
 Quick Start Guide
 ----------------------------------------------------------------------
-The bot runs in two modes. 
+The bot runs in two modes:
+
  - Normal sequential mode-- It retreives the set of entrez id's from [genewikiplus](http://api.genewikiplus.org/map/). The id's returned from GW+ is the order in which the bot runs.
+
   Command  -- sudo python bot.py
 
  - Specified mode --- Specify a text file with list of entrez id's. The bot will run for these entrez id's only.
+  
   Command  -- sudo python bot.py --only /path/to/file
 
 The file contents should be of the folowing format.
