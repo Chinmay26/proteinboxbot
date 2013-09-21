@@ -1,5 +1,26 @@
 #!usr/bin/env python
 # -*- coding: utf-8 -*-
+
+'''
+Author:Chinmay Naik (chin.naik26@gmail.com)
+
+This file is part of ProteinBoxBot.
+
+ProteinBoxBot is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ProteinBoxBot is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ProteinBoxBot.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+
 import pywikibot,sys,re,ipdb
 import mygeneinfo,argparse,datetime
 import genewikidata
@@ -60,6 +81,9 @@ class bot(object):
         -Item : Wikidata item to write to
         -Entity : Canbe HumanGene,HumanProtein,MouseGene,MouseProtein
         -updatedClaims : Claims to be written to this wikidata item
+	Handles multivalue-claims and single value claims seperately.
+	Writes source(reference) to claim after adding claim.
+
         '''
 	#ipdb.set_trace()
 	item_dict = Item.get()
@@ -133,7 +157,7 @@ class bot(object):
                             Item.addClaim(claim,bot=True)
                             if pfield in WItem.Item.property_list_sources:
                                 claim.addSource(source_for_claim)
-                            print val,pfield,Item
+        #                    print val,pfield,Item
                             if pfield not in modifiedClaims:
 				modifiedClaims.append(pfield)
                         
@@ -191,6 +215,9 @@ class bot(object):
         Arguments:
         -HumanProtein : HumanProtein object constructed from mygeneinfo.api
         -Item         : HumanProtein Wikidata Item
+
+	The default linked Item to Wikipedia article is Human Protein Wikidata Item.
+	Thus, pull this item from wikidata through the wikipedia article.
          '''
 
         try:
@@ -214,6 +241,8 @@ class bot(object):
         Arguments:
         HumanGene : HumanGene object constructed from mygeneinfo.api
         
+	Search for already created Human Gene item by wikidata label. If fails, as backup search from "Also known as"(alias) field
+	which has values as "entrez:1234".
         '''
         
         key  = HumanGene.fieldsdict['Entrez Gene ID']
@@ -250,6 +279,10 @@ class bot(object):
         ''' Run the bot for Mouse Gene item
         Arguments:
         MouseGene : MouseGene item constructed from mygeneinfo.api
+
+        Search for already created Mouse Gene item by wikidata label. If fails, as backup search from "Also known as"(alias) field
+        which has values as "entrez:1234".
+
         ''' 
         key  = MouseGene.fieldsdict['Entrez Gene ID']
         title = MouseGene.fieldsdict['Name']
@@ -285,7 +318,10 @@ class bot(object):
     def run_MouseProtein(self,MouseProtein):
         ''' Run the bot for Mouse Protein item
         Arguments:
-        MouseGene : MouseProtein item constructed from mygeneinfo.api
+        MouseProtein : MouseProtein item constructed from mygeneinfo.api
+
+        Search for already created Human Gene item by wikidata label. If fails, as backup search from "Also known as"(alias) field
+        which has values as "uniprot:1234".
         ''' 
         
         key  = MouseProtein.fieldsdict['Uniprot ID']

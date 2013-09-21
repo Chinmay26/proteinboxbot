@@ -1,8 +1,26 @@
-'''
-Created on Jul 3, 2013
+#!usr/bin/env python
+# -*- coding: utf-8 -*-
 
-@author: chinmay
+
 '''
+Author:Chinmay Naik (chin.naik26@gmail.com)
+
+This file is part of ProteinBoxBot.
+
+ProteinBoxBot is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ProteinBoxBot is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ProteinBoxBot.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
 import WItem,ipdb
 import pywikibot
 import genewikidata
@@ -19,6 +37,9 @@ def construct_from_item(Item,Entity ):
     Arguments:
     -Item : wikidata ID
     -Entity : Type of Entity(can be one of HumanProtein , HumanGene ,MouseProtein , MouseGene) 
+
+    It retreives all claims associated with Wikidata item, parses them according to properties specified in WItem.py
+    and constructs Human/Mouse Gene/Protein object with these claim values.
     '''
     Item_dict=Item.get()
     
@@ -92,9 +113,6 @@ def search_Item(title):
                 'type' : 'item',
                 'search': '',
               }
-    #for reelin we have four additional wikidata items for testing purposes
-
-         
     params['search']= title
     request = api.Request(site=mysite,**params)
     data = request.submit()

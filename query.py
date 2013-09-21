@@ -1,10 +1,31 @@
+
+'''
+Author:Chinmay Naik (chin.naik26@gmail.com)
+
+This file is part of ProteinBoxBot.
+
+ProteinBoxBot is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ProteinBoxBot is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with pygenewiki.  If not, see <http://www.gnu.org/licenses/>.
+'''
 from gwiki import wikidata,Wikititle
 import pywikibot
+
 
 def query():
     '''
     Get Wikidata item ID's for gene wikidata items. Retreive the set of entrez id's from genewikiplus. 
-    Query wikidata for these entrez id's. Parse the items to get human/mouse gene/protein ID's
+    Query wikidata for these entrez id's. Parse the items to get human/mouse gene/protein ID's.
+    From Human Gene Wikidata item, using 'encodes' and 'ortholog' property get Human Protein and Mouse Gene Wikidata item.
     '''
     mysite = pywikibot.Site('wikidata','wikidata')
     repo = mysite.data_repository()
@@ -57,7 +78,7 @@ def query():
                 f.write(str(id) + '\t\t')
             f.write('\n')
 
-            
+        #currently the bot has uploaded only 1000 genes    
         counter = counter + 1
         if counter > 1000:
             break
