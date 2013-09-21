@@ -41,8 +41,9 @@ The following projects all fall under the Gene Wiki umbrella:
   
   __ProteinBoxBot__
 ======================================================================
-ProteinBoxBot is a wikidata bot for maintaing Human(&Mouse) Gene(&Protein) items on [Wikidata](http://www.wikidata.org/wiki/Wikidata:Main_Page). PBB retreives information about genes 
-through [MyGene,info](http://mygene.info/) and creates/updates/maintains the Gene items on Wikidata;eg Reelin [wikidata_item](https://www.wikidata.org/wiki/Q414043).
+ProteinBoxBot is a wikidata bot for maintaing Human(&Mouse) Gene(&Protein) items on [Wikidata](http://www.wikidata.org/wiki/Wikidata:Main_Page). 
+PBB retreives information about genes through [MyGene,info](http://mygene.info/) and creates/updates/maintains Gene items on Wikidata
+eg Reelin [wikidata_item](https://www.wikidata.org/wiki/Q414043).
 In due course, the Protein Box templates of Gene Wikipedia articles (eg [Reelin]()) will source their information from these Gene Wikidata items.
 
 Installation
