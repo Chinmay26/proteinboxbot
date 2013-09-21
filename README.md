@@ -41,7 +41,7 @@ The following projects all fall under the Gene Wiki umbrella:
   
   __ProteinBoxBot__
 ======================================================================
-ProteinBoxBot is a wikidata bot for maintaing Human(&Mouse) Gene(&Protein) items on [Wikidata](http://www.wikidata.org/wiki/Wikidata:Main_Page) . PBB retreives information about genes 
+ProteinBoxBot is a wikidata bot for maintaing Human(&Mouse) Gene(&Protein) items on [Wikidata](http://www.wikidata.org/wiki/Wikidata:Main_Page). PBB retreives information about genes 
 through [MyGene,info](http://mygene.info/) and creates/updates/maintains the Gene items on Wikidata;eg Reelin [wikidata_item](https://www.wikidata.org/wiki/Q414043).
 In due course, the Protein Box templates of Gene Wikipedia articles (eg [Reelin]()) will source their information from these Gene Wikidata items.
 
@@ -53,14 +53,14 @@ framework are [here](https://www.mediawiki.org/wiki/Manual:Pywikipediabot/Instal
 Quick Start Guide
 ----------------------------------------------------------------------
 The bot runs in two modes. 
-1.Normal sequential mode-- It retreives the set of entrez id's from [genewikiplus](http://api.genewikiplus.org/map/). The id's returned from GW+ is the order in which the bot runs.
+ - Normal sequential mode-- It retreives the set of entrez id's from [genewikiplus](http://api.genewikiplus.org/map/). The id's returned from GW+ is the order in which the bot runs.
   Command  -- sudo python bot.py
-Currently i run it for 200 genes by using counters.
 
-2)Specified mode --- Specify a text file with list of entrez id's. The bot will run for these entrez id's only.
+ - Specified mode --- Specify a text file with list of entrez id's. The bot will run for these entrez id's only.
   Command  -- sudo python bot.py --only /path/to/file
 
-The file contents should be of the folowing format. 
+The file contents should be of the folowing format.
+
 only=[<list of entrez id's>]  Ex: only=[5649,362]
 
 
