@@ -1,12 +1,6 @@
-'''
-Created on Jun 25, 2013
 
-@author: chinmay
-'''
-
-
-wikidata_user = "ProteinBoxBot"
-wikidata_password = "XsYBcMSqe18h"
+wikidata_user = ""
+wikidata_password = ""
 
 base_language = "en"
 Template_site = "wikipedia"
