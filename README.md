@@ -22,8 +22,10 @@ The following projects all fall under the Gene Wiki umbrella:
   update and expand Gene Wiki pages and resources. Includes ProteinBoxBot,
   the GeneWiki API, and GeneWiki Generator (a BioGPS plugin).
   
+  
 - __ProteinBoxBot__(this project): Wikidata bot to upload gene data
   onto Wikidata.
+
 
 - [__mediawiki-sync__](https://bitbucket.org/sulab/mediawiki-sync): a 
   Java daemon that copies changes from one MediaWiki installation to 
