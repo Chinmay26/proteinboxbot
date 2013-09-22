@@ -54,7 +54,7 @@ In due course, the Protein Box templates of Gene Wikipedia articles (eg [Reelin]
 Installation
 ----------------------------------------------------------------------
 The bot only requires [Pywikibot framework](https://www.mediawiki.org/wiki/Manual:Pywikipediabot). The detailed installation steps for the 
-framework are [here](https://www.mediawiki.org/wiki/Manual:Pywikipediabot/Installation).
+framework are [here](https://www.mediawiki.org/wiki/Manual:Pywikipediabot/Installation). Additionally to run tests, it requires [pytest](http://pytest.org/latest/)
 
 Quick Start Guide
 ----------------------------------------------------------------------
