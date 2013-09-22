@@ -10,6 +10,6 @@ Code_site = "wikidata"
 CATEGORY_NAME = u"Human proteins"
 
 mygene_base = "http://mygene.info/v2/gene/"
-mygene_meta = "http://mygene.info/metadata"
+mygene_meta = "http://mygene.info/v2/metadata"
 uniprot_url = "http://www.uniprot.org/uniprot/"
 
